@@ -6,6 +6,9 @@ from pptx import Presentation
 import tkinter as tk
 from tkinter import filedialog
 import os
+import subprocess
+import docx
+
 
 app = FastAPI()
 
@@ -31,23 +34,48 @@ def extract_texts_from_ppt(path: str):
     return slide_texts
 
 
-@app.get("/get_ppt")
+def extract_texts_from_docx(path: str):
+    from docx import Document
+
+    doc = Document(path)
+    paragraphs = [para.text for para in doc.paragraphs]
+    return "\n".join(paragraphs)
+
+
+@app.get("/get_file")
 async def load_ppt():
     root = tk.Tk()
     root.withdraw()
 
     path = filedialog.askopenfilename(
-        title="PPTを選択",
-        filetypes=[("PowerPoint", "*.pptx")]
-    )
+    title="ファイルを選択",
+    filetypes=[
+        ("PowerPoint", "*.pptx"),
+        ("Word", "*.docx"),
+        ("PDF", "*.pdf"),
+        ("すべて", "*.*")
+    ]
+)
+
 
     if not path:
         return {"error": "ファイルが選択されていません"}
+    
+    ext = os.path.splitext(path)[1].lower()
+
+    print(ext)
+
+    if ext == ".pptx":
+           slides_text = extract_texts_from_ppt(path)
+
+    elif ext == ".docx":slides_text = extract_texts_from_docx(path) 
+
 
     # ファイル名だけ取得
     filename = os.path.basename(path)
+    subprocess.run(["open", path])
 
-    slides_text = extract_texts_from_ppt(path)
+ 
 
     return {
         "path": path,
