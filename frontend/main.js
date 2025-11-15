@@ -1,14 +1,17 @@
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow } = require("electron");
+const path = require("path");
 
-const createWindow = () => {
-  const win = new BrowserWindow({
-    width: 800,
-    height: 600
-  })
+function createWindow() {
+    const win = new BrowserWindow({
+        width: 800,
+        height: 600,
+        webPreferences: {
+            contextIsolation: true,
+            preload: path.join(__dirname, "preload.js") // 今は空でもOK
+        }
+    });
 
-  win.loadFile('index.html')
+    win.loadFile("index.html");
 }
 
-app.whenReady().then(() => {
-  createWindow()
-})
+app.whenReady().then(createWindow);

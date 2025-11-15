@@ -1,3 +1,5 @@
 uv run main.py
-test
-nnn
+
+uv add
+
+uv sync
