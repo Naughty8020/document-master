@@ -7,10 +7,12 @@ btn.addEventListener("click", async () => {
         const data = await res.json();
 
         // バックエンドの返り値は { message: "Hello World" }
-        p.innerText = `サーバーの応答: ${data.message}`;
+        p.innerText = `選択したファイル: ${data.filename}`;
+
 
     } catch (err) {
         console.error(err);
         p.innerText = "Error!";
     }
 });
+

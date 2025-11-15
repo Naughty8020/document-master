@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from pptx import Presentation
 import tkinter as tk
 from tkinter import filedialog
+import os
 
 app = FastAPI()
 
@@ -32,7 +33,6 @@ def extract_texts_from_ppt(path: str):
 
 @app.get("/get_ppt")
 async def load_ppt():
-    # GUI ダイアログを出す
     root = tk.Tk()
     root.withdraw()
 
@@ -44,11 +44,14 @@ async def load_ppt():
     if not path:
         return {"error": "ファイルが選択されていません"}
 
-    # PPT 読み込み
+    # ファイル名だけ取得
+    filename = os.path.basename(path)
+
     slides_text = extract_texts_from_ppt(path)
 
     return {
         "path": path,
+        "filename": filename,  # ← 追加
         "slides": [
             {
                 "index": i + 1,
