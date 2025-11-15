@@ -6,12 +6,25 @@
   </head>
   <body>
     <h1>Hello from Electron renderer!</h1>
-    <button id="selectFileBtn">ファイルを選ぶ</button>
-    <p id="filePath"></p>
-    <p></p>
-    <script src="renderer.js"></script>
-    
+    <button id="selectFileBtn">ファイル選択</button>
 
-    <script src="renderer.js"></script> <!-- これ重要 -->
+    <div>
+      <button id="prevBtn">← 前</button>
+      <button id="nextBtn">次 →</button>
+    </div>
+    <p id="filePathLabel"></p>
+    <p id="slideNumber"></p>
+   
+
+    <textarea
+      id="fileContent"
+      rows="15" 
+      cols="60" 
+      style="margin-top: 10px; white-space: pre-wrap;"
+    ></textarea>
+    
+    <button id="saveBtn">保存</button>
+
+    <script src="renderer.js"></script>
   </body>
 </html>

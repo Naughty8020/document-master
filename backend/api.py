@@ -1,14 +1,13 @@
 # backend/main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 from pptx import Presentation
+from docx import Document
 import tkinter as tk
 from tkinter import filedialog
 import os
 import subprocess
-import docx
-
+from pydantic import BaseModel
 
 app = FastAPI()
 
@@ -19,6 +18,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+prs = None
+filepath = None
 
 def extract_texts_from_ppt(path: str):
     prs = Presentation(path)
@@ -35,56 +37,86 @@ def extract_texts_from_ppt(path: str):
 
 
 def extract_texts_from_docx(path: str):
-    from docx import Document
-
     doc = Document(path)
-    paragraphs = [para.text for para in doc.paragraphs]
-    return "\n".join(paragraphs)
-
+    paragraphs = [para.text.strip() for para in doc.paragraphs if para.text.strip()]
+    return paragraphs
 
 @app.get("/get_file")
-async def load_ppt():
+async def load_file():
+    global prs, filepath
+
     root = tk.Tk()
     root.withdraw()
 
     path = filedialog.askopenfilename(
-    title="ファイルを選択",
-    filetypes=[
-        ("PowerPoint", "*.pptx"),
-        ("Word", "*.docx"),
-        ("PDF", "*.pdf"),
-        ("すべて", "*.*")
-    ]
-)
-
+        title="ファイルを選択",
+        filetypes=[
+            ("PowerPoint", "*.pptx"),
+            ("Word", "*.docx"),
+            ("PDF", "*.pdf"),
+            ("すべて", "*.*")
+        ]
+    )
 
     if not path:
         return {"error": "ファイルが選択されていません"}
-    
+
     ext = os.path.splitext(path)[1].lower()
-
-    print(ext)
-
-    if ext == ".pptx":
-           slides_text = extract_texts_from_ppt(path)
-
-    elif ext == ".docx":slides_text = extract_texts_from_docx(path) 
-
-
-    # ファイル名だけ取得
     filename = os.path.basename(path)
-    subprocess.run(["open", path])
 
- 
+    # ファイルパスを保存（←これが必要）
+    filepath = path
+
+    # PPT
+    if ext == ".pptx":
+        prs = Presentation(path)    # ← これが絶対必要！
+        slides = []
+        for i, slide in enumerate(prs.slides):
+            text = []
+            for shape in slide.shapes:
+                if hasattr(shape, "text"):
+                    text.append(shape.text)
+            slides.append({"index": i, "text": "\n".join(text)})
+
+    # DOCX
+    elif ext == ".docx":
+        prs = None  # ← docx は PPTX と違い編集しない
+        doc = Document(path)
+        paragraphs = [p.text for p in doc.paragraphs]
+        slides = [{"index": i, "text": t} for i, t in enumerate(paragraphs)]
+
+    else:
+        return {"error": f"{ext}形式は未対応です"}
 
     return {
         "path": path,
-        "filename": filename,  # ← 追加
-        "slides": [
-            {
-                "index": i + 1,
-                "text": slide_text
-            }
-            for i, slide_text in enumerate(slides_text)
-        ]
+        "filename": filename,
+        "slides": slides,
+        "ext": ext
     }
+
+
+
+
+
+class SlideUpdate(BaseModel):
+    index: int
+    text: str
+
+
+@app.post("/update_slide")
+def update_slide(data: SlideUpdate):
+    global prs, filepath
+
+    slide = prs.slides[data.index]
+
+    for shape in slide.shapes:
+        if shape.has_text_frame:
+            shape.text = data.text
+
+    prs.save(filepath)  # 上書き保存
+
+    return {"status": "ok", "index": data.index}
+
+
+
