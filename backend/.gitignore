@@ -8,3 +8,7 @@ wheels/
 
 # Virtual environments
 .venv
+backend/backend/models/onnx/mbart_encoder.onnx
+backend/backend/models/onnx/mbart_encoder.onnx.data
+
+document-master_backup/
