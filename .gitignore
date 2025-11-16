@@ -1,1 +1,18 @@
-document-master_backup/
+# General / Node / System Files
+node_modules/
+npm-debug.log
+.env
+.DS_Store
+
+# Python Environments & Build Output
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+.venv
+
+# Large Model Files (Specific)
+backend/backend/models/onnx/mbart_encoder.onnx
+backend/backend/models/onnx/mbart_encoder.onnx.data
