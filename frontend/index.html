@@ -3,42 +3,71 @@
   <head>
     <meta charset="UTF-8" />
     <title>Hello Electron</title>
+    <style>
+      #listDisplay { list-style: none; padding: 0; }
+      #listDisplay li { 
+        margin: 5px 0; padding: 8px 12px; border: 1px solid #ccc; 
+        border-radius: 4px; cursor: pointer; background-color: #f9f9f9; 
+        transition: background-color 0.1s ease; 
+      }
+      #listDisplay li:hover { background-color: #e0e0e0; }
+      
+      /* ★修正: @import は <style> ブロックの先頭に持ってくるか、<link> タグを使うべきですが、
+                 ここではCSSファイルが一つで済むように処理します。*/
+      /* @import url("./node_modules/swagger-ui-dist/swagger-ui.css"); */
+      
+      /* ★重要: Swagger UIのCSSは <link> タグで読み込みます */
+    </style>
+    <link rel="stylesheet" type="text/css" href="./node_modules/swagger-ui-dist/swagger-ui.css" >
+
+    <style>
+      .hidden { display: none; }
+      #tabs button { margin-right: 10px; padding: 5px 10px; }
+    </style>
   </head>
   <body>
-    <h1>Hello from Electron renderer!</h1>
-    <button id="selectFileBtn">ファイル選択</button>
-
-    <div>
-      <button id="prevBtn">← 前</button>
-      <button id="nextBtn">次 →</button>
-    </div>
-    <p id="filePathLabel"></p>
-    <p id="slideNumber"></p>
     
+    <div id="tabs">
+      <button id="showTranslationBtn">翻訳ツール</button>
+      <button id="showSwaggerBtn">APIドキュメント</button>
+    </div>
+    
+    <hr>
+    
+    <div id="translation-container">
+        <h1>Hello from Electron renderer!</h1>
+        <button id="selectFileBtn">ファイル選択</button>
+        <div>
+            <button id="prevBtn">← 前</button>
+            <button id="nextBtn">次 →</button>
+        </div>
+        <p id="filePathLabel"></p>
+        <p id="slideNumber"></p>
+        
+        <textarea id="fileContent" rows="15" cols="60" style="margin-top: 10px; white-space: pre-wrap;"></textarea>
+        <textarea id="translatedContent" rows="15" cols="60" style="margin-top: 10px; white-space: pre-wrap;"></textarea>
+        
+        <button id ="test">test</button>
+        <button id ="translateBtn">翻訳</button>
+        
+        <ul id="listDisplay"></ul>
+        <button id="replaceBtn">選択行を置換</button>
+        
+        <!-- <div id="slideContainer"></div> -->
+        <button id ="savetest">セーブテスト</button>
+        <div id="shapeInfo"></div>
+        <button id="saveBtn">保存</button>
+    </div>
 
-    <!-- <textarea
-      id="fileContent"
-      rows="15" 
-      cols="60" 
-      style="margin-top: 10px; white-space: pre-wrap;"
-    ></textarea>
-
-    <textarea
-      id="translatedContent" 
-      rows="15" 
-      cols="60" 
-      style="margin-top: 10px; white-space: pre-wrap;"
-    ></textarea> -->
-
-    <button id ="test">test</button>
-
-    <button id ="translateBtn">翻訳</button>
-    <div id="slideContainer"></div>
-    <button id ="savetest">セーブテスト</button>
-    <div id="shapeInfo"></div>
-
-    <button id="saveBtn">保存</button>
-
-    <script src="renderer.js"></script>
+    <div id="swagger-container" class="hidden">
+        <h2>APIドキュメント</h2>
+        <div id="swagger-ui"></div>
+    </div>
+    
+    <script src="renderer.js"></script> 
+    
+    <script src="./node_modules/swagger-ui-dist/swagger-ui-bundle.js"></script>
+    <script src="./node_modules/swagger-ui-dist/swagger-ui-standalone-preset.js"></script>
+    
   </body>
 </html>

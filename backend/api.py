@@ -36,10 +36,15 @@ class SlidesPayload(BaseModel):
     slides: list[SlideUpdateShapes]
 
 # --- Util ---
-def update_text_keep_layout(shape, text):
-    if shape.has_text_frame:
-        shape.text_frame.clear()
-        shape.text_frame.text = text
+def get_color(font_color):
+    try:
+        if font_color and font_color.rgb:
+            return str(font_color.rgb)
+    except:
+        return None
+    return None
+
+
 # ----------------------------------------------------
 # /get_file
 # ----------------------------------------------------
@@ -72,18 +77,43 @@ async def load_file():
 
         for i, slide in enumerate(prs.slides):
             slide_shapes = []
-            for shape in slide.shapes:
-                text = shape.text if hasattr(shape, "text") else ""
 
-                slide_shapes.append({
-                    "text": text,
+            for shape in slide.shapes:
+                shape_data = {
                     "left": shape.left if hasattr(shape, "left") else None,
                     "top": shape.top if hasattr(shape, "top") else None,
                     "width": shape.width if hasattr(shape, "width") else None,
                     "height": shape.height if hasattr(shape, "height") else None,
-                })
+                    "paragraphs": []
+                }
+
+                if shape.has_text_frame:
+                    tf = shape.text_frame
+                    print(shape.text)
+
+                    for p_index, paragraph in enumerate(tf.paragraphs):
+                        paragraph_data = {
+                            "paragraph_index": p_index,
+                            "text": paragraph.text,
+                            "runs": []
+                        }
+
+                        for r_index, run in enumerate(paragraph.runs):
+                            paragraph_data["runs"].append({
+                                "run_index": r_index,
+                                "text": run.text,
+                                "bold": run.font.bold,
+                                "italic": run.font.italic,
+                                "size": run.font.size.pt if run.font.size else None,
+                                "color": get_color(run.font.color)
+                            })
+
+                        shape_data["paragraphs"].append(paragraph_data)
+
+                slide_shapes.append(shape_data)
 
             slides.append({"index": i, "shapes": slide_shapes})
+            print(slide_shapes)
 
     elif ext == ".docx":
         prs = None
@@ -182,3 +212,5 @@ def save_test_endpoint(payload: dict = Body(...)):
         "saved_path": test_save_path,
         "slides": slides_info
     }
+
+
