@@ -195,9 +195,7 @@ nextBtn.addEventListener("click", () => {
     }
 });
 
-// ---------------------
-// ★ 翻訳 (ロジック復元 & リスト生成)
-// ---------------------
+
 translateBtn.addEventListener("click", async () => {
     if (!slides.length) return alert("ファイルを先に選択してください");
 
@@ -349,44 +347,41 @@ document.addEventListener("click", (e) => {
 
 
 
-// ---------------------
-// --- UI 切り替えと Swagger UI 初期化ロジック ---
-// ---------------------
-const translationContainer = document.getElementById('translation-container');
-const swaggerContainer = document.getElementById('swagger-container');
-const showTranslationBtn = document.getElementById('showTranslationBtn');
-const showSwaggerBtn = document.getElementById('showSwaggerBtn');
+// const translationContainer = document.getElementById('translation-container');
+// const swaggerContainer = document.getElementById('swagger-container');
+// const showTranslationBtn = document.getElementById('showTranslationBtn');
+// const showSwaggerBtn = document.getElementById('showSwaggerBtn');
 
-let swaggerUiInitialized = false;
+// let swaggerUiInitialized = false;
 
-function showTranslationUI() {
-    translationContainer.classList.remove('hidden');
-    swaggerContainer.classList.add('hidden');
-}
+// function showTranslationUI() {
+//     translationContainer.classList.remove('hidden');
+//     swaggerContainer.classList.add('hidden');
+// }
 
-function showSwaggerUI() {
-    translationContainer.classList.add('hidden');
-    swaggerContainer.classList.remove('hidden');
+// function showSwaggerUI() {
+//     translationContainer.classList.add('hidden');
+//     swaggerContainer.classList.remove('hidden');
 
-    if (!swaggerUiInitialized) {
-        // node_modules の JSがロードされた後なので、SwaggerUIBundleが利用可能
-        SwaggerUIBundle({
-            url: "http://localhost:8080/swagger.json",
-            dom_id: '#swagger-ui',
-            presets: [
-                SwaggerUIBundle.presets.apis,
-                SwaggerUIStandalonePreset
-            ],
-            layout: "StandaloneLayout"
-        });
+//     if (!swaggerUiInitialized) {
+//         // node_modules の JSがロードされた後なので、SwaggerUIBundleが利用可能
+//         SwaggerUIBundle({
+//             url: "http://localhost:8080/swagger.json",
+//             dom_id: '#swagger-ui',
+//             presets: [
+//                 SwaggerUIBundle.presets.apis,
+//                 SwaggerUIStandalonePreset
+//             ],
+//             layout: "StandaloneLayout"
+//         });
         
-        swaggerUiInitialized = true;
-    }
-}
+//         swaggerUiInitialized = true;
+//     }
+// }
 
-showTranslationBtn.addEventListener('click', showTranslationUI);
-showSwaggerBtn.addEventListener('click', showSwaggerUI);
+// showTranslationBtn.addEventListener('click', showTranslationUI);
+// showSwaggerBtn.addEventListener('click', showSwaggerUI);
 
-// 初期表示は翻訳ツールUI
-showTranslationUI();
+// // 初期表示は翻訳ツールUI
+// showTranslationUI();
 
