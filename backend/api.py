@@ -361,6 +361,12 @@ from pptx.util import Inches, Pt
 
 class TextData(BaseModel):
     text: str
+    left: float
+    top: float
+    width: float
+    height: float
+
+    
 
 @app.post("/insert")
 def insert_slide(data: TextData):
@@ -369,17 +375,20 @@ def insert_slide(data: TextData):
     try:
         # 💡 修正点2: tryブロック内の処理を正しくインデント
         print("インサートのパス",filepath)
-
-        
-    
+        print(data.left,data.top,data.width,data.height) 
 
         slide = prs.slides[0]
         
         # 座標とサイズを Inches で指定 (例として左上から2インチ、幅4インチなど)
-        left = Inches(2) 
-        top = Inches(2)  
+        # left = Inches(data.left) 
+        # top = Inches(data.top)  
+        # width = Inches(data.width)
+        # height = Inches(data.height)
+
+        left = Inches(7) 
+        top = Inches(5)  
         width = Inches(4)
-        height = Inches(1.5)
+        height = Inches(5)
         
         # 指定した座標とサイズでテキストボックスを追加
         txBox = slide.shapes.add_textbox(left, top, width, height)

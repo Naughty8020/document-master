@@ -36,8 +36,20 @@ insertBtn.addEventListener("click", async () => {
     //     return; // 空の場合は送信しない
     // }
 
+    const leftValue   = parseFloat(document.getElementById("left-input").value);
+    const topValue    = parseFloat(document.getElementById("top-input").value);
+    const widthValue  = parseFloat(document.getElementById("width-input").value);
+    const heightValue = parseFloat(document.getElementById("height-input").value);
+
+
     try{
-        const payload = { text: textareaValue };
+        const payload = { 
+            text: textareaValue,
+            left:leftValue,
+            top:topValue,
+            width:widthValue,
+            height:heightValue
+         };
         
         const res = await fetch("http://127.0.0.1:8000/insert", {
             method: "POST",
