@@ -77,6 +77,7 @@ insertBtn.addEventListener("click", async () => {
 
 const insertTranslateBtn = document.getElementById("insert-translate");
 const textInput = document.getElementById("text-input");
+console.log(textInput.innerText);
 
 insertTranslateBtn.addEventListener("click", async () => {
     try {
@@ -85,7 +86,7 @@ insertTranslateBtn.addEventListener("click", async () => {
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ text: textInput.innerText }),
+            body: JSON.stringify({ text: textInput.value })
         });
 
         const data = await res.json(); // JSONとして取得

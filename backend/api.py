@@ -424,6 +424,8 @@ class TranslateData(BaseModel):
 
 @app.post("/insert-translate")
 def insert_translate(data: TranslateData):
+    print(data)
+    print("翻訳するテキスト:", data.text)
     translated_text = translate_text(data.text)  # data.text にアクセスする
     return {
         "status": "ok",
