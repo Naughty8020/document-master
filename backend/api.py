@@ -380,15 +380,15 @@ def insert_slide(data: TextData):
         slide = prs.slides[0]
         
         # 座標とサイズを Inches で指定 (例として左上から2インチ、幅4インチなど)
-        # left = Inches(data.left) 
-        # top = Inches(data.top)  
-        # width = Inches(data.width)
-        # height = Inches(data.height)
+        left = Inches(data.left) 
+        top = Inches(data.top)  
+        width = Inches(data.width)
+        height = Inches(data.height)
 
-        left = Inches(7) 
-        top = Inches(5)  
-        width = Inches(4)
-        height = Inches(5)
+        # left = Inches(7) 
+        # top = Inches(5)  
+        # width = Inches(4)
+        # height = Inches(5)
         
         # 指定した座標とサイズでテキストボックスを追加
         txBox = slide.shapes.add_textbox(left, top, width, height)
@@ -417,3 +417,16 @@ def insert_slide(data: TextData):
     
     # try...exceptブロックの外に出すことで、エラーが発生しなかった場合のみ実行される
     return {"status": "ok", "message": "新しいスライドを追加しました。"}
+
+
+class TranslateData(BaseModel):
+    text: str
+
+@app.post("/insert-translate")
+def insert_translate(data: TranslateData):
+    translated_text = translate_text(data.text)  # data.text にアクセスする
+    return {
+        "status": "ok",
+        "message": "翻訳して挿入しました。",
+        "translated_text": translated_text
+    }

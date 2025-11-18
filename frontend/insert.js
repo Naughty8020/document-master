@@ -71,3 +71,32 @@ insertBtn.addEventListener("click", async () => {
         console.error("Error inserting text:", error);
     }
 });
+
+
+
+
+const insertTranslateBtn = document.getElementById("insert-translate");
+const textInput = document.getElementById("text-input");
+
+insertTranslateBtn.addEventListener("click", async () => {
+    try {
+        const res = await fetch("http://127.0.0.1:8000/insert-translate", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ text: textInput.innerText }),
+        });
+
+        const data = await res.json(); // JSONとして取得
+        console.log(data); // 確認用
+
+        // 新しいdivに翻訳テキストを入れる
+        const translatedDiv = document.createElement('div');
+        translatedDiv.innerText = data.translated_text;
+
+        document.body.appendChild(translatedDiv); // bodyに追加
+    } catch (error) {
+        console.error("Error inserting translated text:", error);
+    }
+});

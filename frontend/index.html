@@ -81,13 +81,16 @@
 
       <label>テキスト：</label>
       <textarea id="text-input" cols="30" rows="10"></textarea>
+
+      <button id="insert-translate">翻訳</button>
   
       <div class="pptx-setting">
-          <label>Left（インチ）:</label>
-          <input type="number" id="left-input" value="2" step="0.1">
-  
-          <label>Top（インチ）:</label>
-          <input type="number" id="top-input" value="2" step="0.1">
+        <label>Left（インチ）:</label>
+        <input type="number" id="left-input" value="2" step="0.1" min="0" max="15">
+        
+        <label>Top（インチ）:</label>
+        <input type="number" id="top-input" value="2" step="0.1" min="0" max="10">
+        
   
           <label>Width（インチ）:</label>
           <input type="number" id="width-input" value="4" step="0.1">
@@ -95,6 +98,17 @@
           <label>Height（インチ）:</label>
           <input type="number" id="height-input" value="1.5" step="0.1">
       </div>
+
+      <p>デフォルトサイズ（PowerPoint標準）<br>
+
+        通常の 標準(4:3) → Left:10インチ × Top:7.5インチ<br>
+        
+        ワイドスクリーン(16:9) → Left:13.333インチ × Top:7.5インチ</p><br>
+        *この基準を超えるとスライドからはみ出す可能性があります。<br>
+
+        Width（textboxの横幅）<br>
+        hight(textboxの縦幅) <br>
+        1インチ=2.54センチ
   
       <button id="insert-btn">挿入する</button>
   
