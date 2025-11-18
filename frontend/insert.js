@@ -22,6 +22,8 @@ textareaSectionbtn.addEventListener("click", () => {
 //     text: textareaValue
 // }
 
+let translatedText = "";
+
 insertBtn.addEventListener("click", async () => {
     
 
@@ -44,7 +46,7 @@ insertBtn.addEventListener("click", async () => {
 
     try{
         const payload = { 
-            text: textareaValue,
+            text: translatedText,
             left:leftValue,
             top:topValue,
             width:widthValue,
@@ -95,6 +97,7 @@ insertTranslateBtn.addEventListener("click", async () => {
         // 新しいdivに翻訳テキストを入れる
         const translatedDiv = document.createElement('div');
         translatedDiv.innerText = data.translated_text;
+        translatedText=data.translated_text;
 
         document.body.appendChild(translatedDiv); // bodyに追加
     } catch (error) {
