@@ -214,3 +214,42 @@ def save_test_endpoint(payload: dict = Body(...)):
     }
 
 
+@app.post("/savefile")
+def savefile_endpoint(payload: dict = Body(...)):
+    global prs, filepath
+    if prs is None or filepath is None:
+        return {"error": "保存するファイルがありません"}
+
+    slides_data = payload.get("slides", [])
+
+    for slide_item in slides_data:
+        slide = prs.slides[slide_item["slide_index"]]
+
+        for shape_item in slide_item["shapes"]:
+            shape = slide.shapes[shape_item["shape_index"]]
+
+            if not shape.has_text_frame:
+                continue
+
+            tf = shape.text_frame
+
+            # ---- 部分的 paragraph 置換 ----
+            if "paragraphs" in shape_item:
+                for p_item in shape_item["paragraphs"]:
+                    p_index = p_item.get("paragraph_index")
+                    new_text = p_item.get("text", "")
+
+                    # index が範囲外なら無視
+                    if p_index is None or p_index >= len(tf.paragraphs):
+                        continue
+
+                    para = tf.paragraphs[p_index]
+                    para.clear()  # ※中の runs をクリア
+                    para.text = new_text
+
+            # paragraphs が無い → 元の段落すべて維持
+            else:
+                pass
+
+    prs.save(filepath)
+    return {"status": "ok"}

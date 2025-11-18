@@ -27,14 +27,25 @@ function showSlide(index) {
     const shapeInfoDiv = document.getElementById("shapeInfo");
 
     let html = "";
+
+  
+
     
     for (let i = 0; i < slide.shapes.length; i++) {
         const shape = slide.shapes[i];
     
         html += `
-            <div style="margin-bottom:10px; padding:6px; border:1px solid #ccc;">
-                <strong>Shape ${i + 1}</strong><br>
-        `;
+        <div style="margin-bottom:10px; padding:6px; border:1px solid #ccc;">
+            <strong>Shape ${i + 1}</strong><br>
+    
+            <button 
+                class="select-all-btn" 
+                data-shape-index="${i}"
+                style="margin: 4px 0; padding:3px 10px;"
+            >
+                全選択
+            </button>
+    `;
     
         // --- paragraph の処理 ---
         if (shape.paragraphs && shape.paragraphs.length > 0) {
@@ -43,11 +54,23 @@ function showSlide(index) {
                 const para = shape.paragraphs[p];
     
                 html += `
-                    <div style="margin-left: 10px; padding: 4px 0;">
-                        <strong>Paragraph ${p + 1}</strong><br>
-                        ${para.text || ""}
-                    </div>
-                `;
+    <div style="margin-left: 10px; padding: 4px 0;">
+        <label style="display:flex; align-items:center; gap:6px;">
+            <input 
+                type="checkbox" 
+                class="para-checkbox" 
+                data-shape-index="${i}"
+                data-paragraph-index="${p}"
+            >
+            <span><strong>Paragraph ${p + 1}</strong></span>
+        </label>
+        <div style="margin-left:22px; margin-top:3px;">
+            ${para.text || ""}
+        </div>
+    </div>
+`;
+
+            
             }
     
         } else {
@@ -264,6 +287,23 @@ saveBtn.addEventListener("click", async () => {
     }
 });
 
+
+const savefileBtn = document.getElementById("savefileBtn");
+
+savefileBtn.addEventListener("click", async () => {
+    try {
+        const res = await fetch("http://127.0.0.1:8000/savefile", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ selectedFilePath })
+        });
+
+    } catch (err) {
+        console.error(err);
+    }
+});
+
+
 // ---------------------
 // ★ test / savetest (ロジック復元)
 // ---------------------
@@ -279,6 +319,31 @@ testBtn.addEventListener("click", async () => {
         console.log(data.status); // => "ok"
     } catch (err) {
         console.error(err);
+    }
+});
+
+document.addEventListener("click", (e) => {
+    if (e.target.classList.contains("select-all-btn")) {
+        const shapeIndex = e.target.dataset.shapeIndex;
+
+        // この shape の paragraph チェックボックスだけ取得
+        const checkboxes = document.querySelectorAll(
+            `.para-checkbox[data-shape-index="${shapeIndex}"]`
+        );
+
+        // すべてチェック済みか確認
+        let allChecked = true;
+        for (let i = 0; i < checkboxes.length; i++) {
+            if (!checkboxes[i].checked) {
+                allChecked = false;
+                break;
+            }
+        }
+
+        // トグル処理
+        for (let i = 0; i < checkboxes.length; i++) {
+            checkboxes[i].checked = !allChecked;
+        }
     }
 });
 
@@ -324,3 +389,4 @@ showSwaggerBtn.addEventListener('click', showSwaggerUI);
 
 // 初期表示は翻訳ツールUI
 showTranslationUI();
+
