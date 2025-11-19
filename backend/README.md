@@ -5,4 +5,6 @@ uv add
 uv sync
 
 
-staka/fugumt-ja-en
+
+
+uvicorn api:app --reload
