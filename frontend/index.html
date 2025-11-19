@@ -285,6 +285,57 @@ header {
       <button id="insert-btn">挿入する</button>
   
   </div>
+
+  <button id="openModalBtn">翻訳する資料を選ぶ</button>
+
+<!-- ▼ モーダル本体 -->
+<div id="modal" class="modal">
+  <div class="modal-content">
+    <span id="closeModalBtn" class="close">&times;</span>
+    
+    <h2>翻訳したい資料を選択してください</h2>
+
+    <!-- ▼ ファイル選択 -->
+    <input type="file" id="fileInput" />
+
+  </div>
+</div>
+
+<style>
+/* ----- モーダル背景 ----- */
+.modal {
+  display: none;  
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+}
+
+/* ----- モーダルの中身 ----- */
+.modal-content {
+  background: #fff;
+  margin: 12% auto;
+  padding: 20px 30px;
+  border-radius: 10px;
+  width: 350px;
+  text-align: center;
+  box-shadow: 0 0 20px rgba(0,0,0,0.2);
+}
+
+/* 閉じるボタン */
+.close {
+  float: right;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+input[type="file"] {
+  margin-top: 20px;
+}
+</style>
   
   
 <!-- 
@@ -307,7 +358,26 @@ header {
         menuBtn.classList.toggle("active");
         headerMenu.classList.toggle("open");
       });
+
+      
     </script>
+
+    <script>
+document.getElementById("openModalBtn").onclick = () => {
+  document.getElementById("modal").style.display = "block";
+};
+
+document.getElementById("closeModalBtn").onclick = () => {
+  document.getElementById("modal").style.display = "none";
+};
+
+// 背景クリックで閉じる
+window.onclick = (event) => {
+  if (event.target === document.getElementById("modal")) {
+    document.getElementById("modal").style.display = "none";
+  }
+};
+</script>
     
   </body>
 </html>
