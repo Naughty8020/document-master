@@ -31,6 +31,19 @@
 }
 
     </style>
+
+    <style>
+        .scroll-box {
+      width: 300px;       /* 横幅 */
+      height: 200px;      /* 高さ */
+      border: 1px solid #333;
+      padding: 10px;
+      overflow-y: auto;   /* 縦方向にスクロール可能 */
+      background-color: #f9f9f9;
+    }
+    </style>
+
+
   </head>
   <body>
     
@@ -70,8 +83,11 @@
           <button id="replaceBtn">選択行を置換</button>
           
           <div id="slideContainer"></div>
+
+
           <button id ="savetest">セーブテスト</button>
-          <div id="shapeInfo"></div>
+          <div id="shapeInfo"  ></div>
+          
           <button id="saveBtn">保存</button>
       </div>
   
@@ -137,3 +153,7 @@
     
   </body>
 </html>
+
+
+
+

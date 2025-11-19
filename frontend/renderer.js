@@ -1,5 +1,3 @@
-// const { get } = require("http"); // これは不要なのでコメントアウトのまま
-
 // --- 1. 変数の初期化 ---
 const btn = document.getElementById("selectFileBtn");
 const p = document.getElementById("filePathLabel");
@@ -13,111 +11,108 @@ const translateBtn = document.getElementById("translateBtn");
 const testBtn = document.getElementById("test");
 const listDisplay = document.getElementById("listDisplay");
 const replaceBtn = document.getElementById("replaceBtn");
+const savefileBtn = document.getElementById("savefileBtn");
 
 let slides = [];
 let currentIndex = 0;
 let selectedFilePath = null;
-let selectedIndices = []; // 複数選択用
+let selectedIndices = [];
 
 // ---------------------
 // ★ showSlide 修正版
 // ---------------------
 function showSlide(index) {
+    currentIndex = index;
     const slide = slides[index];
+
+
+    console.log("Current index:", currentIndex);
+    console.log("Slide data:", slides[index]);
+    console.log("Shapes:", slides[index]?.shapes);
+
     const shapeInfoDiv = document.getElementById("shapeInfo");
-
-    let html = "";
-
-  
-
-    
-    for (let i = 0; i < slide.shapes.length; i++) {
-        const shape = slide.shapes[i];
-    
-        html += `
-        <div style="margin-bottom:10px; padding:6px; border:1px solid #ccc;">
-            <strong>Shape ${i + 1}</strong><br>
-    
-            <button 
-                class="select-all-btn" 
-                data-shape-index="${i}"
-                style="margin: 4px 0; padding:3px 10px;"
-            >
-                全選択
-            </button>
-    `;
-    
-        // --- paragraph の処理 ---
-        if (shape.paragraphs && shape.paragraphs.length > 0) {
-    
-            for (let p = 0; p < shape.paragraphs.length; p++) {
-                const para = shape.paragraphs[p];
-    
-                html += `
-    <div id="t-value" style="margin-left: 10px; padding: 4px 0;">
-        <label style="display:flex; align-items:center; gap:6px;">
-            <input 
-                type="checkbox" 
-                class="para-checkbox" 
-                data-shape-index="${i}"
-                data-paragraph-index="${p}"
-            >
-            <span><strong>Paragraph ${p + 1}</strong></span>
-        </label>
-        <div style="margin-left:22px; margin-top:3px;">
-            ${para.text || ""}
-        </div>
-    </div>
-`;
-
-            
-            }
-    
-        } else {
-            html += `<div>(no paragraphs)</div>`;
-        }
-    
-        // --- 座標など ---
-        html += `
-                <hr style="margin:6px 0;">
-                Left: ${shape.left}<br>
-                Top: ${shape.top}<br>
-                Width: ${shape.width}<br>
-                Height: ${shape.height}
+    console.log("Displaying slide:", slide);
+    let html = slide.shapes
+        .map((shape, i) => {
+            const paragraphsHtml =
+                shape.paragraphs && shape.paragraphs.length > 0
+                    ? shape.paragraphs
+                          .map(
+                              (para, p) => `
+        <div id="t-value" style="margin-left: 10px; padding: 4px 0;">
+            <label style="display:flex; align-items:center; gap:6px;">
+                <input 
+                    type="checkbox" 
+                    class="para-checkbox" 
+                    data-shape-index="${i}"
+                    data-paragraph-index="${p}">
+                <span><strong>Paragraph ${p + 1}</strong></span>
+            </label>
+            <div style="margin-left:22px; margin-top:3px;">
+                ${para.text || ""}
             </div>
-        `;
-    }
-    
+        </div>`
+                          )
+                          .join("")
+                    : `<div>(no paragraphs)</div>`;
+
+            return `
+<div style="margin-bottom: 10px; padding: 8px; border: 1px solid #ccc; border-radius: 6px;">
+    <strong>Shape ${i + 1}</strong><br>
+
+    <button
+      class="select-all-btn"
+      data-shape-index="${i}"
+      style="margin: 6px 0; padding: 4px 12px; border-radius: 4px; cursor: pointer;">
+      全選択
+    </button>
+
+    <div style="display: flex; gap: 16px; margin-top: 6px;">
+      <div class="scroll-box" style="flex: 1; margin-top: 4px;">
+        ${paragraphsHtml}
+      </div>
+
+      <div style="min-width: 160px; font-size: 14px; line-height: 1.4;">
+        <div>Left: ${shape.left}</div>
+        <div>Top: ${shape.top}</div>
+        <div>Width: ${shape.width}</div>
+        <div>Height: ${shape.height}</div>
+      </div>
+    </div>
+
+    <hr style="margin: 8px 0;">
+</div>`;
+        })
+        .join("");
 
     shapeInfoDiv.innerHTML = html;
     slideNumber.innerText = `Slide ${index + 1} / ${slides.length}`;
-    
-    // ページ移動時、リストと選択をクリア
+
+    // クリア処理
     listDisplay.innerHTML = "";
     selectedIndices = [];
     translatedTextArea.value = "";
-    
-    // スライドの全テキストを結合して表示
-    const allTexts = slide.shapes.map(s => s.text ?? s).join("\n");
+
+    // スライド内の全テキストを結合
+    const allTexts = slide.shapes.map((s) => s.text ?? s).join("\n");
     textArea.value = allTexts;
 }
 
 // ---------------------
-// --- リスト選択ロジック (トグル選択) ---
+// --- リスト選択 ---
 // ---------------------
 listDisplay.addEventListener("click", (e) => {
     if (e.target.tagName !== "LI") return;
 
     const li = e.target;
     const index = Array.from(listDisplay.children).indexOf(li);
-    const idxInArray = selectedIndices.indexOf(index);
-    
-    if (idxInArray > -1) {
-        li.style.backgroundColor = ""; 
-        selectedIndices.splice(idxInArray, 1);
+
+    if (selectedIndices.includes(index)) {
+        selectedIndices = selectedIndices.filter((n) => n !== index);
+        li.style.backgroundColor = "";
     } else {
-        li.style.backgroundColor = "#ffd"; 
         selectedIndices.push(index);
+        li.style.backgroundColor = "#ffd";
     }
 });
 
@@ -125,46 +120,45 @@ listDisplay.addEventListener("click", (e) => {
 // --- 置換ロジック ---
 // ---------------------
 replaceBtn.addEventListener("click", () => {
-    if (selectedIndices.length === 0) return alert("置換する行を選択してください");
-    if (currentIndex >= slides.length || !slides[currentIndex].shapes) return;
-    
-    const combinedLiText = selectedIndices
-        .map(index => listDisplay.children[index].textContent)
-        .join("\n"); 
+    if (!selectedIndices.length) return alert("置換する行を選択してください");
+
+    const combined = selectedIndices
+        .map((i) => listDisplay.children[i].textContent)
+        .join("\n");
+
     const targetShapeIndex = Math.min(...selectedIndices);
-
-    if (targetShapeIndex >= slides[currentIndex].shapes.length) return alert("選択された行がスライドの要素数を超えています");
-
     const targetShape = slides[currentIndex].shapes[targetShapeIndex];
-    if (typeof targetShape === "object" && targetShape !== null && "text" in targetShape) {
-        targetShape.text = combinedLiText;
+
+    if (typeof targetShape === "object") {
+        targetShape.text = combined;
     } else {
-        slides[currentIndex].shapes[targetShapeIndex] = combinedLiText;
+        slides[currentIndex].shapes[targetShapeIndex] = combined;
     }
 
-    const allTexts = slides[currentIndex].shapes.map(s => s.text ?? s).join("\n");
+    const allTexts = slides[currentIndex].shapes.map((s) => s.text ?? s).join("\n");
     textArea.value = allTexts;
     translatedTextArea.value = allTexts;
 
-    alert(`shape ${targetShapeIndex + 1} に選択した ${selectedIndices.length} 行を結合して置換しました`);
-    
-    Array.from(listDisplay.children).forEach(li => li.style.backgroundColor = "");
-    selectedIndices = [];
+    alert("置換完了");
 });
 
+// ---------------------
+// ★ ファイル選択
+// ---------------------
 
-
+let slidesData = null;
 let fileData = null;
 btn.addEventListener("click", async () => {
     try {
         const res = await fetch("http://127.0.0.1:8000/get_file");
         const data = await res.json();
         fileData = data;
-        slides = data.slides || [];
-        selectedFilePath = data.path;
-        console.log("段落",data.slides[0].shapes[1].paragraphs);
 
-        if (data.error) { 
+        slides = data.slides;
+        selectedFilePath = data.path;
+        slidesData = data;
+        console.log("aaa",data);
+        if (data.error) {
             p.innerText = `Error: ${data.error}`;
             return;
         }
@@ -172,8 +166,7 @@ btn.addEventListener("click", async () => {
         p.innerText = `選択したファイル: ${data.filename}`;
 
         currentIndex = 0;
-        if (slides.length > 0) showSlide(currentIndex);
-
+        showSlide(0);
     } catch (err) {
         console.error(err);
         p.innerText = "通信エラー";
@@ -182,239 +175,137 @@ btn.addEventListener("click", async () => {
 
 
 
-
-
+// ---------------------
+// ★ 翻訳
+// ---------------------
 translateBtn.addEventListener("click", async () => {
-    if (!slides.length) return alert("ファイルを先に選択してください");
+    const tNodes = document.querySelectorAll("#t-value > div");
+    if (!tNodes.length) return alert("翻訳対象がありません");
 
-    // ① t-value の paragraph 部分だけ集める
-    const tValueNodes = document.querySelectorAll("#t-value > div");
-    if (!tValueNodes.length) return alert("翻訳するテキストがありません");
+    const textList = [...tNodes].map((n) => n.textContent.trim());
+    const textToTranslate = textList.join("\n");
 
-    const textList = [...tValueNodes].map(node => node.textContent.trim());
-    const textToTranslate = textList.join("\n"); // 改行区切り
-
-    if (!textToTranslate.trim()) return alert("翻訳するテキストを入力してください");
+    if (!textToTranslate.trim()) return alert("翻訳テキストが空です");
 
     translateBtn.disabled = true;
 
-
-   
-
-    
     try {
-        console.log("翻訳リクエスト送信:", textToTranslate);
-    
         const res = await fetch("http://127.0.0.1:8000/translate_text", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(fileData)
+            body: JSON.stringify(fileData),
         });
-    
+
         const data = await res.json();
-        console.log("翻訳レスポンス受信:", data);
-    
+        console .log("Translation result:", data);
+
         const translatedTextDiv = document.getElementById("translated-text");
-        translatedTextDiv.innerHTML = ""; // まず空にする
-    
-        const slides = data.translated_text.slides; // 返却データのslides配列
-    
-        for (let i = 0; i < slides.length; i++) {
-            const slide = slides[i];
+        translatedTextDiv.innerHTML = "";
+
+        const tSlides = data.translated_text.slides;
+
+        tSlides.forEach((slide, i) => {
             const slideDiv = document.createElement("div");
             slideDiv.innerHTML = `<h3>Slide ${i + 1}</h3>`;
-    
-            const shapes = slide.shapes;
-            for (let j = 0; j < shapes.length; j++) {
-                const shape = shapes[j];
+
+            slide.shapes.forEach((shape, j) => {
                 const shapeDiv = document.createElement("div");
                 shapeDiv.style.marginLeft = "20px";
                 shapeDiv.innerHTML = `<strong>Shape ${j + 1}</strong>`;
-    
-                const paragraphs = shape.paragraphs;
-                for (let k = 0; k < paragraphs.length; k++) {
-                    const p = paragraphs[k];
-                    const pElement = document.createElement("p");
-                    pElement.style.marginLeft = "40px";
-                    pElement.textContent = p.text;
-                    shapeDiv.appendChild(pElement);
-                }
-    
+
+                shape.paragraphs.forEach((p) => {
+                    const pElem = document.createElement("p");
+                    pElem.style.marginLeft = "40px";
+                    pElem.textContent = p.text;
+                    shapeDiv.appendChild(pElem);
+                });
+
                 slideDiv.appendChild(shapeDiv);
-            }
-    
+            });
+
             translatedTextDiv.appendChild(slideDiv);
-        }
-    
-    } catch (error) {
-        console.error("翻訳処理中にエラー:", error);
-    }
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// 前へ
-prevBtn.addEventListener("click", () => {
-    if (currentIndex > 0) {
-        currentIndex--;
-        showSlide(currentIndex);
-    }
-});
-
-// 次へ
-nextBtn.addEventListener("click", () => {
-    if (currentIndex < slides.length - 1) {
-        currentIndex++;
-        showSlide(currentIndex);
+        });
+    } catch (err) {
+        console.error(err);
+    } finally {
+        translateBtn.disabled = false;
     }
 });
 
 // ---------------------
-// ★ 保存 (ロジック復元)
+// ★ 前へ / 次へ（currentIndex を使う）
+// ---------------------
+prevBtn.addEventListener("click", () => {
+    if (currentIndex > 0) showSlide(currentIndex - 1);
+});
+
+nextBtn.addEventListener("click", () => {
+    if (currentIndex < slides.length - 1) showSlide(currentIndex + 1);
+});
+
+// ---------------------
+// ★ 保存ロジック
 // ---------------------
 saveBtn.addEventListener("click", async () => {
-    if (!slides.length) return;
-
-    // スライドデータ構造をサーバーに合わせて構築
-    const slideData = slides.map(slide => ({
+    const slideData = slides.map((slide) => ({
         slide_index: slide.index,
         shapes: slide.shapes.map((s, i) => ({
             shape_index: i,
-            // 翻訳されたテキストは s.text に格納されていると仮定
-            translated_text: s.text || s
-        }))
+            translated_text: s.text || s,
+        })),
     }));
 
     try {
-        const res = await fetch("http://127.0.0.1:8000/update_slide", {
+        await fetch("http://127.0.0.1:8000/update_slide", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ slides: slideData })
+            body: JSON.stringify({ slides: slideData }),
         });
 
-        const data = await res.json();
-        if (data.status === "ok") alert("✅ 保存完了");
-
+        alert("保存完了");
     } catch (err) {
         console.error(err);
         alert("保存エラー");
     }
 });
 
-
-const savefileBtn = document.getElementById("savefileBtn");
-
+// ---------------------
+// savefile
+// ---------------------
 savefileBtn.addEventListener("click", async () => {
-    try {
-        const res = await fetch("http://127.0.0.1:8000/savefile", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ selectedFilePath })
-        });
-
-    } catch (err) {
-        console.error(err);
-    }
+    await fetch("http://127.0.0.1:8000/savefile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ selectedFilePath }),
+    });
 });
 
-
 // ---------------------
-// ★ test / savetest (ロジック復元)
+// test
 // ---------------------
 testBtn.addEventListener("click", async () => {
-    try {
-        const res = await fetch("http://127.0.0.1:8000/test", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ selectedFilePath })
-        });
+    const res = await fetch("http://127.0.0.1:8000/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ selectedFilePath }),
+    });
 
-        const data = await res.json();
-        console.log(data.status); // => "ok"
-    } catch (err) {
-        console.error(err);
-    }
+    const data = await res.json();
+    console.log(data.status);
 });
 
+// ---------------------
+// 全選択ボタン
+// ---------------------
 document.addEventListener("click", (e) => {
-    if (e.target.classList.contains("select-all-btn")) {
-        const shapeIndex = e.target.dataset.shapeIndex;
+    if (!e.target.classList.contains("select-all-btn")) return;
 
-        // この shape の paragraph チェックボックスだけ取得
-        const checkboxes = document.querySelectorAll(
-            `.para-checkbox[data-shape-index="${shapeIndex}"]`
-        );
+    const shapeIndex = e.target.dataset.shapeIndex;
+    const checkboxes = document.querySelectorAll(
+        `.para-checkbox[data-shape-index="${shapeIndex}"]`
+    );
 
-        // すべてチェック済みか確認
-        let allChecked = true;
-        for (let i = 0; i < checkboxes.length; i++) {
-            if (!checkboxes[i].checked) {
-                allChecked = false;
-                break;
-            }
-        }
+    const allChecked = [...checkboxes].every((c) => c.checked);
 
-        // トグル処理
-        for (let i = 0; i < checkboxes.length; i++) {
-            checkboxes[i].checked = !allChecked;
-        }
-    }
+    checkboxes.forEach((c) => (c.checked = !allChecked));
 });
-});
-
-
-
-// const translationContainer = document.getElementById('translation-container');
-// const swaggerContainer = document.getElementById('swagger-container');
-// const showTranslationBtn = document.getElementById('showTranslationBtn');
-// const showSwaggerBtn = document.getElementById('showSwaggerBtn');
-
-// let swaggerUiInitialized = false;
-
-// function showTranslationUI() {
-//     translationContainer.classList.remove('hidden');
-//     swaggerContainer.classList.add('hidden');
-// }
-
-// function showSwaggerUI() {
-//     translationContainer.classList.add('hidden');
-//     swaggerContainer.classList.remove('hidden');
-
-//     if (!swaggerUiInitialized) {
-//         // node_modules の JSがロードされた後なので、SwaggerUIBundleが利用可能
-//         SwaggerUIBundle({
-//             url: "http://localhost:8080/swagger.json",
-//             dom_id: '#swagger-ui',
-//             presets: [
-//                 SwaggerUIBundle.presets.apis,
-//                 SwaggerUIStandalonePreset
-//             ],
-//             layout: "StandaloneLayout"
-//         });
-        
-//         swaggerUiInitialized = true;
-//     }
-// }
-
-// showTranslationBtn.addEventListener('click', showTranslationUI);
-// showSwaggerBtn.addEventListener('click', showSwaggerUI);
-
-// // 初期表示は翻訳ツールUI
-// showTranslationUI();
