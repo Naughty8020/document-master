@@ -48,13 +48,14 @@
   <body>
     
     <header>
-      <h1>Document Master</h1>
       <!-- ハンバーガーメニュー -->
       <div class="menu-btn" id="menuBtn">
         <span></span>
         <span></span>
         <span></span>
       </div>
+
+      <h1>Document Master</h1>
 
       <!-- 開閉メニュー -->
         <nav id="headerMenu">
@@ -68,18 +69,17 @@
     
   <style>
   /* ヘッダー全体 */
-  header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 20px;
-    background: #2c3e50;
-    color: #fff;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  }
-
+header {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  background: #2c3e50;
+  color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  gap: 16px;   /* ← 適度に余白を確保 */
+}
   header h1 {
     font-size: 20px;
     margin: 0;
@@ -150,7 +150,7 @@
   /* ナビゲーションメニュー */
   nav {
     position: absolute;
-    right: 20px;
+    left: 20px;
     top: 60px;
     background: #34495e;
     border-radius: 5px;
