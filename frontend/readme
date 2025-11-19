@@ -1,3 +1,5 @@
 node -v
 npm i
 npm run start
+test
+test2
