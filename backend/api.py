@@ -195,17 +195,55 @@ async def load_file():
 # ----------------------------------------------------
 # /translate_text (翻訳モデルがないため、このAPIは機能しない可能性があります)
 # ----------------------------------------------------
+
+from pydantic import BaseModel
+from typing import List, Optional
+
+class Paragraph(BaseModel):
+    text: str
+
+class Shape(BaseModel):
+    paragraphs: Optional[List[Paragraph]] = []
+
+class Slide(BaseModel):
+    shapes: Optional[List[Shape]] = []
+
+class FileData(BaseModel):
+    slides: Optional[List[Slide]] = []
+    path: Optional[str] = None
+    filename: Optional[str] = None
+
+#文字列で翻訳jsonに戻して送る
 @app.post("/translate_text")
-async def api_translate_text(data: TextToTranslate):
+async def api_translate_text(file_data: FileData):
 
-    translate_text(slides)  # モデルがロードされているか確認するためのダミー呼び出し
- 
-    print(f"⚠️ 翻訳モデルが未定義です。入力テキストをそのまま返します: {data.text}")
-    return {"status": "ok", "translated_text": data.text}
+    # 段落ごとのテキストを抽出
+    all_texts = []
+    for slide in file_data.slides or []:
+        for shape in slide.shapes or []:
+            for para in shape.paragraphs or []:
+                all_texts.append(para.text)
 
-# ----------------------------------------------------
-# /update_slide
-# ----------------------------------------------------
+    # 各テキストを翻訳（モデルがなければ元のまま返す）
+    translated_texts = [translate_text(t) for t in all_texts]
+
+    # 元の構造に戻す
+    idx = 0
+    for slide in file_data.slides or []:
+        for shape in slide.shapes or []:
+            for para in shape.paragraphs or []:
+                para.text = translated_texts[idx]
+                idx += 1
+
+    
+    print("翻訳完了:", file_data)
+
+    return {"status": "ok", "translated_text": file_data}
+
+
+
+
+
 @app.post("/update_slide")
 def update_slide(data: SlidesPayload):
     global prs, filepath

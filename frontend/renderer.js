@@ -9,7 +9,7 @@ const prevBtn = document.getElementById("prevBtn");
 const nextBtn = document.getElementById("nextBtn");
 const slideNumber = document.getElementById("slideNumber");
 const translateBtn = document.getElementById("translateBtn");
-const translatedTextArea = document.getElementById("translatedContent");
+
 const testBtn = document.getElementById("test");
 const listDisplay = document.getElementById("listDisplay");
 const replaceBtn = document.getElementById("replaceBtn");
@@ -54,7 +54,7 @@ function showSlide(index) {
                 const para = shape.paragraphs[p];
     
                 html += `
-    <div style="margin-left: 10px; padding: 4px 0;">
+    <div id="t-value" style="margin-left: 10px; padding: 4px 0;">
         <label style="display:flex; align-items:center; gap:6px;">
             <input 
                 type="checkbox" 
@@ -152,13 +152,14 @@ replaceBtn.addEventListener("click", () => {
     selectedIndices = [];
 });
 
-// ---------------------
-// ★ ファイル選択 (ロジック復元)
-// ---------------------
+
+
+let fileData = null;
 btn.addEventListener("click", async () => {
     try {
         const res = await fetch("http://127.0.0.1:8000/get_file");
         const data = await res.json();
+        fileData = data;
         slides = data.slides || [];
         selectedFilePath = data.path;
         console.log("段落",data.slides[0].shapes[1].paragraphs);
@@ -179,6 +180,94 @@ btn.addEventListener("click", async () => {
     }
 });
 
+
+
+
+
+translateBtn.addEventListener("click", async () => {
+    if (!slides.length) return alert("ファイルを先に選択してください");
+
+    // ① t-value の paragraph 部分だけ集める
+    const tValueNodes = document.querySelectorAll("#t-value > div");
+    if (!tValueNodes.length) return alert("翻訳するテキストがありません");
+
+    const textList = [...tValueNodes].map(node => node.textContent.trim());
+    const textToTranslate = textList.join("\n"); // 改行区切り
+
+    if (!textToTranslate.trim()) return alert("翻訳するテキストを入力してください");
+
+    translateBtn.disabled = true;
+
+
+
+    try {
+        console.log("翻訳リクエスト送信:", textToTranslate);
+
+        const res = await fetch("http://127.0.0.1:8000/translate_text", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(fileData)
+        });
+
+        console.log("翻訳レスポンス受信", await res.json());
+        // const data = await res.json();
+        // console.log("翻訳レスポンス受信:", data);
+        // const translatedText = data.translated_text;
+        // const translatedList = translatedText.split('\n');
+
+        let translatedList = [];  // 空配列で初期化しておく
+
+      
+
+        // shape に反映
+        slides[currentIndex].shapes.forEach((shape, i) => {
+            if (shape.paragraphs && shape.paragraphs[i]) {
+                shape.paragraphs[i].text = translatedList[i] || "";
+            }
+        });
+
+        // ★ リスト表示
+        listDisplay.innerHTML = "";
+        selectedIndices = [];
+        
+        translatedList.forEach(line => {
+            const trimmed = line.trim();
+            if (!trimmed) return;
+            const li = document.createElement("li");
+            li.textContent = trimmed;
+            listDisplay.appendChild(li);
+        });
+
+        alert("✅ 翻訳完了");
+
+    } catch (err) {
+        console.error(err);
+        alert("翻訳エラー");
+    } finally {
+        translateBtn.disabled = false;
+    }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // 前へ
 prevBtn.addEventListener("click", () => {
     if (currentIndex > 0) {
@@ -192,64 +281,6 @@ nextBtn.addEventListener("click", () => {
     if (currentIndex < slides.length - 1) {
         currentIndex++;
         showSlide(currentIndex);
-    }
-});
-
-
-translateBtn.addEventListener("click", async () => {
-    if (!slides.length) return alert("ファイルを先に選択してください");
-
-    // 注意: あなたの元のコードでは shape ではなく textarea.value 全体を取得していました
-    const textToTranslate = textArea.value; 
-    if (!textToTranslate.trim()) return alert("翻訳するテキストを入力してください");
-
-    translateBtn.disabled = true;
-
-    try {
-        const res = await fetch("http://127.0.0.1:8000/translate_text", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text: textToTranslate }) // text全体を送信
-        });
-
-        const data = await res.json();
-        const translatedText = data.translated_text;
-        const translatedList = translatedText.split('\n'); // 翻訳結果を行ごとに分割
-
-        translatedTextArea.value = translatedText;
-        textArea.value = translatedText;
-
-        // shape にテキストを割り当て (行数で対応付け)
-        slides[currentIndex].shapes.forEach((s, i) => {
-            // テキストプロパティを持つか確認し、翻訳結果を代入
-            if (typeof s === "object" && s !== null && "text" in s) {
-                s.text = translatedList[i] || "";
-            } else {
-                s = translatedList[i] || "";
-            }
-        });
-
-        // ★ リスト生成 ★
-        listDisplay.innerHTML = "";
-        selectedIndices = [];
-        
-        for (const line of translatedList) {
-            const trimmedLine = line.trim();
-            if (!trimmedLine) continue;
-            
-            const li = document.createElement("li");
-            li.textContent = trimmedLine;
-            listDisplay.appendChild(li);
-        }
-
-        alert("✅ 翻訳完了");
-
-    } catch (err) {
-        console.error(err);
-        alert("翻訳エラー");
-    }
-    finally {
-        translateBtn.disabled = false;
     }
 });
 
