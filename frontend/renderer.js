@@ -199,55 +199,57 @@ translateBtn.addEventListener("click", async () => {
     translateBtn.disabled = true;
 
 
+   
 
+    
     try {
         console.log("翻訳リクエスト送信:", textToTranslate);
-
+    
         const res = await fetch("http://127.0.0.1:8000/translate_text", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(fileData)
         });
-
-        console.log("翻訳レスポンス受信", await res.json());
-        // const data = await res.json();
-        // console.log("翻訳レスポンス受信:", data);
-        // const translatedText = data.translated_text;
-        // const translatedList = translatedText.split('\n');
-
-        let translatedList = [];  // 空配列で初期化しておく
-
-      
-
-        // shape に反映
-        slides[currentIndex].shapes.forEach((shape, i) => {
-            if (shape.paragraphs && shape.paragraphs[i]) {
-                shape.paragraphs[i].text = translatedList[i] || "";
+    
+        const data = await res.json();
+        console.log("翻訳レスポンス受信:", data);
+    
+        const translatedTextDiv = document.getElementById("translated-text");
+        translatedTextDiv.innerHTML = ""; // まず空にする
+    
+        const slides = data.translated_text.slides; // 返却データのslides配列
+    
+        for (let i = 0; i < slides.length; i++) {
+            const slide = slides[i];
+            const slideDiv = document.createElement("div");
+            slideDiv.innerHTML = `<h3>Slide ${i + 1}</h3>`;
+    
+            const shapes = slide.shapes;
+            for (let j = 0; j < shapes.length; j++) {
+                const shape = shapes[j];
+                const shapeDiv = document.createElement("div");
+                shapeDiv.style.marginLeft = "20px";
+                shapeDiv.innerHTML = `<strong>Shape ${j + 1}</strong>`;
+    
+                const paragraphs = shape.paragraphs;
+                for (let k = 0; k < paragraphs.length; k++) {
+                    const p = paragraphs[k];
+                    const pElement = document.createElement("p");
+                    pElement.style.marginLeft = "40px";
+                    pElement.textContent = p.text;
+                    shapeDiv.appendChild(pElement);
+                }
+    
+                slideDiv.appendChild(shapeDiv);
             }
-        });
-
-        // ★ リスト表示
-        listDisplay.innerHTML = "";
-        selectedIndices = [];
-        
-        translatedList.forEach(line => {
-            const trimmed = line.trim();
-            if (!trimmed) return;
-            const li = document.createElement("li");
-            li.textContent = trimmed;
-            listDisplay.appendChild(li);
-        });
-
-        alert("✅ 翻訳完了");
-
-    } catch (err) {
-        console.error(err);
-        alert("翻訳エラー");
-    } finally {
-        translateBtn.disabled = false;
+    
+            translatedTextDiv.appendChild(slideDiv);
+        }
+    
+    } catch (error) {
+        console.error("翻訳処理中にエラー:", error);
     }
-});
-
+    
 
 
 
@@ -375,6 +377,7 @@ document.addEventListener("click", (e) => {
         }
     }
 });
+});
 
 
 
@@ -415,4 +418,3 @@ document.addEventListener("click", (e) => {
 
 // // 初期表示は翻訳ツールUI
 // showTranslationUI();
-
