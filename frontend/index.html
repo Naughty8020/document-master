@@ -68,18 +68,28 @@
     <!-- test -->
     
   <style>
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
   /* ヘッダー全体 */
 header {
   display: flex;
   align-items: center;
-  padding: 12px 20px;
+  padding: 12px 20px;   /* ← デザインそのまま維持 */
   background: #2c3e50;
   color: #fff;
   position: sticky;
   top: 0;
   z-index: 10;
-  gap: 16px;   /* ← 適度に余白を確保 */
+  gap: 16px;
+
+  /* ★ 実際の高さをここで固定（= 12px × 2 + 22px = 46px → 約 56px ） */
+  height: 56px;         /* ← ここが重要！ */
+  box-sizing: border-box;
 }
+
   header h1 {
     font-size: 20px;
     margin: 0;
@@ -151,12 +161,15 @@ header {
   nav {
     position: fixed;
     left: 0;
-    top: 60px;                 /* ← ヘッダーの下から配置する */
-    height: calc(100vh - 60px);/* ← 画面全体 - ヘッダーの高さ */
+
+  /* ★ ヘッダーと完全一致！ */
+    top: 56px;
+
+    height: calc(100vh - 56px);
     width: 220px;
     background: #34495e;
     border-right: 1px solid #2c3e50;
-    padding: 10px 0;          /* ← ここは自由に調整 */
+    padding: 10px 0;
     display: none;
     flex-direction: column;
     z-index: 999;
