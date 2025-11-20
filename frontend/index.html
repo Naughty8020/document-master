@@ -13,7 +13,7 @@
       #listDisplay li:hover { background-color: #e0e0e0; }
       
       /* ★修正: @import は <style> ブロックの先頭に持ってくるか、<link> タグを使うべきですが、
-                 ここではCSSファイルが一つで済むように処理します。*/
+          ここではCSSファイルが一つで済むように処理します。*/
       /* @import url("./node_modules/swagger-ui-dist/swagger-ui.css"); */
       
       /* ★重要: Swagger UIのCSSは <link> タグで読み込みます */
@@ -47,10 +47,157 @@
   </head>
   <body>
     
+    <header>
+      <!-- ハンバーガーメニュー -->
+      <div class="menu-btn" id="menuBtn">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
 
-    <button id="translate-section-btn">翻訳</button>
+      <h1>Document Master</h1>
 
-    <button id="selectFileBtn">ファイル選択</button>
+      <!-- 開閉メニュー -->
+        <nav id="headerMenu">
+        <button id="textarea-section-btn">入力</button>
+        <button id="selectFileBtn">ファイル選択</button>
+        <button id="translate-section-btn">翻訳</button>
+        </nav>
+    </header>
+
+    <!-- test -->
+    
+  <style>
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+  /* ヘッダー全体 */
+header {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;   /* ← デザインそのまま維持 */
+  background: #2c3e50;
+  color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  gap: 16px;
+
+  /* ★ 実際の高さをここで固定（= 12px × 2 + 22px = 46px → 約 56px ） */
+  height: 56px;         /* ← ここが重要！ */
+  box-sizing: border-box;
+}
+
+  header h1 {
+    font-size: 20px;
+    margin: 0;
+    font-weight: 600;
+  }
+
+  /* ハンバーガーメニュー */
+  .menu-btn {
+    width: 30px;
+    height: 22px;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .menu-btn span {
+    position: absolute;
+    height: 3px;
+    width: 100%;
+    background: #fff;
+    border-radius: 3px;
+    transition: 0.3s;
+  }
+
+/* ▼ ハンバーガーメニュー内のボタン共通デザイン */
+  #headerMenu button {
+    background: none;
+    border: none;
+    color: #fff;
+    width: 100%;
+    padding: 12px 18px;
+    text-align: left;
+    cursor: pointer;
+    font-size: 15px;
+  }
+
+  #headerMenu button:hover {
+    background-color: #3d566e;
+  }
+
+  #headerMenu #translate-section-btn {
+    margin-top: 0;  /* ← これで高さが揃う */
+    display: block;
+  }
+
+  .menu-btn span:nth-child(1) {
+    top: 0;
+  }
+  .menu-btn span:nth-child(2) {
+    top: 9px;
+  }
+  .menu-btn span:nth-child(3) {
+    top: 18px;
+  }
+
+  /* メニュー開閉時のアニメーション */
+  .menu-btn.active span:nth-child(1) {
+    transform: rotate(45deg);
+    top: 9px;
+  }
+  .menu-btn.active span:nth-child(2) {
+    opacity: 0;
+  }
+  .menu-btn.active span:nth-child(3) {
+    transform: rotate(-45deg);
+    top: 9px;
+  }
+
+  /* ナビゲーションメニュー */
+  nav {
+    position: fixed;
+    left: 0;
+
+  /* ★ ヘッダーと完全一致！ */
+    top: 56px;
+
+    height: calc(100vh - 56px);
+    width: 220px;
+    background: #34495e;
+    border-right: 1px solid #2c3e50;
+    padding: 10px 0;
+    display: none;
+    flex-direction: column;
+    z-index: 999;
+  }
+
+  nav a {
+    display: block;
+    padding: 10px 15px;
+    color: #fff;
+    text-decoration: none;
+    font-size: 14px;
+  }
+
+  nav a:hover {
+    background: #3d566e;
+  }
+
+  nav.open {
+  display: flex;
+  }
+
+</style>
+
+<!-- test -->
+
+    <!-- <button id="translate-section-btn">翻訳</button> -->
+
+    <!-- <button id="selectFileBtn">ファイル選択</button> -->
 
     <p id="filePathLabel"></p>
 
@@ -65,7 +212,7 @@
       
       <div id="translation-container">
           <h1>Hello from Electron renderer!</h1>
-         
+        
           <div>
               <button id="prevBtn">← 前</button>
               <button id="nextBtn">次 →</button>
@@ -75,7 +222,7 @@
           
           <!-- <textarea id="fileContent" rows="15" cols="60" style="margin-top: 10px; white-space: pre-wrap;"></textarea>
           <textarea id="translatedContent" rows="15" cols="60" style="margin-top: 10px; white-space: pre-wrap;"></textarea>
-           -->
+          -->
           <button id ="test">test</button>
           <button id ="translateBtn">翻訳</button>
           
@@ -101,7 +248,7 @@
     </div>
 
 
-    <button id="textarea-section-btn">入力</button>
+    <!-- <button id="textarea-section-btn">入力</button> -->
     <div id="textarea-section" class="is-hidden">
 
       <label>テキスト：</label>
@@ -138,8 +285,59 @@
       <button id="insert-btn">挿入する</button>
   
   </div>
+
+  <button id="openModalBtn">翻訳する資料を選ぶ</button>
+
+<!-- ▼ モーダル本体 -->
+<div id="modal" class="modal">
+  <div class="modal-content">
+    <span id="closeModalBtn" class="close">&times;</span>
+    
+    <h2>翻訳したい資料を選択してください</h2>
+
+    <!-- ▼ ファイル選択 -->
+    <input type="file" id="fileInput" />
+
+  </div>
+</div>
+
+<style>
+/* ----- モーダル背景 ----- */
+.modal {
+  display: none;  
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+}
+
+/* ----- モーダルの中身 ----- */
+.modal-content {
+  background: #fff;
+  margin: 12% auto;
+  padding: 20px 30px;
+  border-radius: 10px;
+  width: 350px;
+  text-align: center;
+  box-shadow: 0 0 20px rgba(0,0,0,0.2);
+}
+
+/* 閉じるボタン */
+.close {
+  float: right;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+input[type="file"] {
+  margin-top: 20px;
+}
+</style>
   
-   
+  
 <!-- 
     <div id="swagger-container" class="hidden">
         <h2>APIドキュメント</h2>
@@ -150,6 +348,36 @@
     <script src="insert.js"></script>
     <script src="./node_modules/swagger-ui-dist/swagger-ui-bundle.js"></script>
     <script src="./node_modules/swagger-ui-dist/swagger-ui-standalone-preset.js"></script>
+
+    <!-- test -->
+    <script>
+      const menuBtn = document.getElementById("menuBtn");
+      const headerMenu = document.getElementById("headerMenu");
+
+        menuBtn.addEventListener("click", () => {
+        menuBtn.classList.toggle("active");
+        headerMenu.classList.toggle("open");
+      });
+
+      
+    </script>
+
+    <script>
+document.getElementById("openModalBtn").onclick = () => {
+  document.getElementById("modal").style.display = "block";
+};
+
+document.getElementById("closeModalBtn").onclick = () => {
+  document.getElementById("modal").style.display = "none";
+};
+
+// 背景クリックで閉じる
+window.onclick = (event) => {
+  if (event.target === document.getElementById("modal")) {
+    document.getElementById("modal").style.display = "none";
+  }
+};
+</script>
     
   </body>
 </html>
