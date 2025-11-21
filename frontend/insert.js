@@ -1,5 +1,3 @@
-
-
 const translateSection = document.getElementById("translate-section");
 const textareaSection = document.getElementById("textarea-section");
 const translateSectionbtn = document.getElementById("translate-section-btn");
@@ -8,13 +6,14 @@ const insertBtn = document.getElementById("insert-btn");
 
 
 translateSectionbtn.addEventListener("click", () => {
-    translateSection.classList.toggle('is-hidden');
-}   );
+    translateSection.classList.remove('is-hidden');  // これを表示
+    textareaSection.classList.add('is-hidden');      // こっちは隠す
+});
 
 textareaSectionbtn.addEventListener("click", () => {
-    textareaSection.classList.toggle('is-hidden');
+    textareaSection.classList.remove('is-hidden');   // これを表示
+    translateSection.classList.add('is-hidden');    // こっちは隠す
 });
-    
 
 
 
@@ -51,7 +50,7 @@ insertBtn.addEventListener("click", async () => {
             top:topValue,
             width:widthValue,
             height:heightValue
-         };
+        };
         
         const res = await fetch("http://127.0.0.1:8000/insert", {
             method: "POST",
