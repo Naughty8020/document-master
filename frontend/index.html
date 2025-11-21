@@ -48,6 +48,7 @@
   <body>
     
     <header>
+      <div id="menu-overlay"></div>
       <!-- ハンバーガーメニュー -->
       <div class="menu-btn" id="menuBtn">
         <span></span>
@@ -96,71 +97,92 @@ header {
     font-weight: 600;
   }
 
-  /* ハンバーガーメニュー */
-  .menu-btn {
-    width: 30px;
-    height: 22px;
-    cursor: pointer;
-    position: relative;
-  }
+ /* ハンバーガーメニュー */
+.menu-btn {
+  width: 28px;
+  height: 22px;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
 
-  .menu-btn span {
-    position: absolute;
-    height: 3px;
-    width: 100%;
-    background: #fff;
-    border-radius: 3px;
-    transition: 0.3s;
-  }
+.menu-btn span {
+  display: block;
+  height: 2px;
+  width: 100%;
+  background: #fff;
+  border-radius: 2px;
+  transition: 0.25s ease;
+}
 
-/* ▼ ハンバーガーメニュー内のボタン共通デザイン */
-  #headerMenu button {
-    background: none;
-    border: none;
-    color: #fff;
-    width: 100%;
-    padding: 12px 18px;
-    text-align: left;
-    cursor: pointer;
-    font-size: 15px;
-  }
+/* --- 開いた状態 --- */
+.menu-btn.active span:nth-child(1) {
+  transform: translateY(10px) rotate(45deg);
+}
+.menu-btn.active span:nth-child(2) {
+  opacity: 0;
+}
+.menu-btn.active span:nth-child(3) {
+  transform: translateY(-10px) rotate(-45deg);
+}
 
-  #headerMenu button:hover {
-    background-color: #3d566e;
-  }
+/* --- 背景の暗幕（GitHubっぽいやつ） --- */
+#menu-overlay {
+  display: none;
+  position: fixed;
+  top: 56px; /* header と位置合わせ */
+  left: 0;
+  width: 100%;
+  height: calc(100vh - 56px);
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 998;
+}
 
-  #headerMenu #translate-section-btn {
-    margin-top: 0;  /* ← これで高さが揃う */
-    display: block;
-  }
+/* --- メニュー本体（左からスライド、GitHub風） --- */
+#headerMenu {
+  position: fixed;
+  left: -260px;      /* 初期位置：画面外 */
+  top: 56px;          /* header の下 */
+  width: 260px;
+  height: calc(100vh - 56px);
+  background: #ffffff;
+  border-left: 1px solid #ddd;
+  box-shadow: -2px 0 6px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  padding: 15px 0;
+  transition: right 0.25s ease;
+  z-index: 999;
+}
 
-  .menu-btn span:nth-child(1) {
-    top: 0;
-  }
-  .menu-btn span:nth-child(2) {
-    top: 9px;
-  }
-  .menu-btn span:nth-child(3) {
-    top: 18px;
-  }
+/* 開いた状態 */
+#headerMenu.open {
+  left: 0;
+}
 
-  /* メニュー開閉時のアニメーション */
-  .menu-btn.active span:nth-child(1) {
-    transform: rotate(45deg);
-    top: 9px;
-  }
-  .menu-btn.active span:nth-child(2) {
-    opacity: 0;
-  }
-  .menu-btn.active span:nth-child(3) {
-    transform: rotate(-45deg);
-    top: 9px;
-  }
+/* GitHub風ボタン */
+#headerMenu button {
+  background: none;
+  border: none;
+  color: #24292e;
+  width: 100%;
+  padding: 14px 18px;
+  text-align: left;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+#headerMenu button:hover {
+  background-color: #f6f8fa;
+  color: #000;
+}
 
   /* ナビゲーションメニュー */
   nav {
     position: fixed;
-    left: 0;
+    display: none;
 
   /* ★ ヘッダーと完全一致！ */
     top: 56px;
@@ -353,11 +375,19 @@ input[type="file"] {
     <script>
       const menuBtn = document.getElementById("menuBtn");
       const headerMenu = document.getElementById("headerMenu");
+      const overlay = document.getElementById("menu-overlay");
 
-        menuBtn.addEventListener("click", () => {
-        menuBtn.classList.toggle("active");
-        headerMenu.classList.toggle("open");
-      });
+menuBtn.addEventListener("click", () => {
+  menuBtn.classList.toggle("active");
+  headerMenu.classList.toggle("open");
+  overlay.style.display = headerMenu.classList.contains("open") ? "block" : "none";
+});
+
+overlay.addEventListener("click", () => {
+  menuBtn.classList.remove("active");
+  headerMenu.classList.remove("open");
+  overlay.style.display = "none";
+});
 
       
     </script>
