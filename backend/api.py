@@ -458,44 +458,34 @@ def insert_slide(data: TextData):
 
 
 
-class ShapeData(BaseModel):
+class ShapeItem(BaseModel):
+    shape_index: int
     text: str
-    left: float
-    top: float
-    width: float
-    height: float
 
-class TranslatepptPayload(BaseModel):
-    shapes: list[ShapeData]
+class SavePayload(BaseModel):
+    slide_index: int
+    shapes: list[ShapeItem]
 
 
 @app.post("/saveppt")
-def translateppt(data: TranslatepptPayload):
+def saveppt(data: SavePayload):
     global prs, filepath
-    slide = prs.slides[0]
 
-    replaced_texts = []  # ←ここを追加
+    slide = prs.slides[data.slide_index]
 
-    for s in data.shapes:
-        print("これが置換される", s.text, s.left, s.top, s.width, s.height)
+    for item in data.shapes:
+        try:
+            shape = slide.shapes[item.shape_index]
+        except:
+            continue
 
-        left = Inches(s.left)
-        top = Inches(s.top)
-        width = Inches(s.width)
-        height = Inches(s.height)
+        if not shape.has_text_frame:
+            continue
 
-        txBox = slide.shapes.add_textbox(left, top, width, height)
-        tf = txBox.text_frame
-        tf.text = s.text  # 置換したテキスト
-
-        # 置換内容をリストに追加
-        replaced_texts.append({
-            "text": s.text,
-            "left": s.left,
-            "top": s.top,
-            "width": s.width,
-            "height": s.height
-        })
+        tf = shape.text_frame
+        tf.clear()
+        tf.text = item.text
 
     prs.save(filepath)
-    return {"status": "ok", "replaced": replaced_texts}
+
+    return {"status": "ok"}

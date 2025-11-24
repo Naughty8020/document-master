@@ -245,17 +245,16 @@ nextBtn.addEventListener("click", () => {
 // ---------------------
 // ★ 保存ロジック
 // ---------------------
+// --- 保存ボタン ---
 saveBtn.addEventListener("click", async () => {
     const currentShapes = slides[currentIndex].shapes;
 
     const payload = {
-        shapes: currentShapes.map(s => ({
-            text: (s.paragraphs?.map(p => p.text).join("\n")) ?? "",
-            left: s.left,
-            top: s.top,
-            width: s.width,
-            height: s.height
-        }))
+        slide_index: currentIndex,
+        shapes: currentShapes.map((s, i) => ({
+            shape_index: i,
+            text: s.paragraphs?.map(p => p.text).join("\n") ?? "",
+        })),
     };
 
     const res = await fetch("http://127.0.0.1:8000/saveppt", {
@@ -265,7 +264,7 @@ saveBtn.addEventListener("click", async () => {
     });
 
     const data = await res.json();
-    console.log("これが治安",data);
+    console.log("save result:", data);
 });
 
 // ---------------------
