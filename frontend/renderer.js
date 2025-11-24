@@ -17,6 +17,8 @@ let slides = [];
 let currentIndex = 0;
 let selectedFilePath = null;
 let selectedIndices = [];
+let slidesData = null;
+let fileData = null;
 
 // ---------------------
 // ★ showSlide 修正版
@@ -25,13 +27,12 @@ function showSlide(index) {
     currentIndex = index;
     const slide = slides[index];
 
-
     console.log("Current index:", currentIndex);
-    console.log("Slide data:", slides[index]);
-    console.log("Shapes:", slides[index]?.shapes);
+    console.log("Slide data:", slide);
+    console.log("Shapes:", slide?.shapes);
 
     const shapeInfoDiv = document.getElementById("shapeInfo");
-    console.log("Displaying slide:", slide);
+
     let html = slide.shapes
         .map((shape, i) => {
             const paragraphsHtml =
@@ -88,12 +89,7 @@ function showSlide(index) {
     shapeInfoDiv.innerHTML = html;
     slideNumber.innerText = `Slide ${index + 1} / ${slides.length}`;
 
-    // クリア処理
-    listDisplay.innerHTML = "";
-    selectedIndices = [];
-    translatedTextArea.value = "";
-
-    // スライド内の全テキストを結合
+    // スライド内の全テキストを textarea に入れる
     const allTexts = slide.shapes.map((s) => s.text ?? s).join("\n");
     textArea.value = allTexts;
 }
@@ -126,18 +122,17 @@ replaceBtn.addEventListener("click", () => {
         .map((i) => listDisplay.children[i].textContent)
         .join("\n");
 
-    const targetShapeIndex = Math.min(...selectedIndices);
-    const targetShape = slides[currentIndex].shapes[targetShapeIndex];
+    const targetIndex = Math.min(...selectedIndices);
+    const targetShape = slides[currentIndex].shapes[targetIndex];
 
     if (typeof targetShape === "object") {
         targetShape.text = combined;
     } else {
-        slides[currentIndex].shapes[targetShapeIndex] = combined;
+        slides[currentIndex].shapes[targetIndex] = combined;
     }
 
     const allTexts = slides[currentIndex].shapes.map((s) => s.text ?? s).join("\n");
     textArea.value = allTexts;
-    translatedTextArea.value = allTexts;
 
     alert("置換完了");
 });
@@ -145,27 +140,26 @@ replaceBtn.addEventListener("click", () => {
 // ---------------------
 // ★ ファイル選択
 // ---------------------
-
-let slidesData = null;
-let fileData = null;
 btn.addEventListener("click", async () => {
     try {
         const res = await fetch("http://127.0.0.1:8000/get_file");
         const data = await res.json();
-        fileData = data;
 
+        fileData = data;
         slides = data.slides;
         selectedFilePath = data.path;
         slidesData = data;
-        console.log("aaa",data);
+
+        console.log("aaa", data);
+
         if (data.error) {
             p.innerText = `Error: ${data.error}`;
             return;
         }
 
         p.innerText = `選択したファイル: ${data.filename}`;
-
         currentIndex = 0;
+
         showSlide(0);
     } catch (err) {
         console.error(err);
@@ -173,19 +167,12 @@ btn.addEventListener("click", async () => {
     }
 });
 
-
-
 // ---------------------
 // ★ 翻訳
 // ---------------------
 translateBtn.addEventListener("click", async () => {
     const tNodes = document.querySelectorAll("#t-value > div");
     if (!tNodes.length) return alert("翻訳対象がありません");
-
-    const textList = [...tNodes].map((n) => n.textContent.trim());
-    const textToTranslate = textList.join("\n");
-
-    if (!textToTranslate.trim()) return alert("翻訳テキストが空です");
 
     translateBtn.disabled = true;
 
@@ -197,7 +184,7 @@ translateBtn.addEventListener("click", async () => {
         });
 
         const data = await res.json();
-        console .log("Translation result:", data);
+        console.log("Translation result:", data);
 
         const translatedTextDiv = document.getElementById("translated-text");
         translatedTextDiv.innerHTML = "";
@@ -225,6 +212,16 @@ translateBtn.addEventListener("click", async () => {
 
             translatedTextDiv.appendChild(slideDiv);
         });
+
+        // ★ ここで翻訳結果を slides に反映
+        tSlides.forEach((slide, i) => {
+            slide.shapes.forEach((shape, j) => {
+                shape.paragraphs.forEach((p, k) => {
+                    slides[i].shapes[j].paragraphs[k].text = p.text;
+                });
+            });
+        });
+
     } catch (err) {
         console.error(err);
     } finally {
@@ -232,8 +229,10 @@ translateBtn.addEventListener("click", async () => {
     }
 });
 
+
+
 // ---------------------
-// ★ 前へ / 次へ（currentIndex を使う）
+// ★ 前へ / 次へ
 // ---------------------
 prevBtn.addEventListener("click", () => {
     if (currentIndex > 0) showSlide(currentIndex - 1);
@@ -248,26 +247,24 @@ nextBtn.addEventListener("click", () => {
 // ---------------------
 // --- 保存ボタン ---
 saveBtn.addEventListener("click", async () => {
-    const slideData = slides.map((slide) => ({
-        slide_index: slide.index,
-        shapes: slide.shapes.map((s, i) => ({
+    const currentShapes = slides[currentIndex].shapes;
+
+    const payload = {
+        slide_index: currentIndex,
+        shapes: currentShapes.map((s, i) => ({
             shape_index: i,
-            translated_text: s.text || s,
+            text: s.paragraphs?.map(p => p.text).join("\n") ?? "",
         })),
-    }));
+    };
 
-    try {
-        await fetch("http://127.0.0.1:8000/update_slide", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ slides: slideData }),
-        });
+    const res = await fetch("http://127.0.0.1:8000/saveppt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+    });
 
-        alert("保存完了");
-    } catch (err) {
-        console.error(err);
-        alert("保存エラー");
-    }
+    const data = await res.json();
+    console.log("save result:", data);
 });
 
 // ---------------------
@@ -307,6 +304,5 @@ document.addEventListener("click", (e) => {
     );
 
     const allChecked = [...checkboxes].every((c) => c.checked);
-
     checkboxes.forEach((c) => (c.checked = !allChecked));
 });
