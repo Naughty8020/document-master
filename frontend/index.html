@@ -3,518 +3,297 @@
   <head>
     <meta charset="UTF-8" />
     <title>Hello Electron</title>
-    <style>
-      #listDisplay { list-style: none; padding: 0; }
-      #listDisplay li { 
-        margin: 5px 0; padding: 8px 12px; border: 1px solid #ccc; 
-        border-radius: 4px; cursor: pointer; background-color: #f9f9f9; 
-        transition: background-color 0.1s ease; 
-      }
-      #listDisplay li:hover { background-color: #e0e0e0; }
-      
-      /* ★修正: @import は <style> ブロックの先頭に持ってくるか、<link> タグを使うべきですが、
-          ここではCSSファイルが一つで済むように処理します。*/
-      /* @import url("./node_modules/swagger-ui-dist/swagger-ui.css"); */
-      
-      /* ★重要: Swagger UIのCSSは <link> タグで読み込みます */
-    </style>
     <link rel="stylesheet" type="text/css" href="./node_modules/swagger-ui-dist/swagger-ui.css" >
-
     <style>
+      /* ----- 共通クラス ----- */
       .hidden { display: none; }
-      #tabs button { margin-right: 10px; padding: 5px 10px; }
+      .is-hidden { display: none !important; }
+
+      /* ----- スクロールBOX ----- */
+      .scroll-box {
+        width: 300px;
+        height: 200px;
+        border: 1px solid #333;
+        padding: 10px;
+        overflow-y: auto;
+        background-color: #f9f9f9;
+      }
+
+      /* ----- 左サイドバー ----- */
+      #sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 220px;
+        height: 100vh;
+        background: #1f2b3a;
+        color: #fff;
+        padding: 20px 10px;
+        box-sizing: border-box;
+        border-right: 1px solid #2c3e50;
+        display: flex;
+        flex-direction: column;
+        z-index: 9999;
+      }
+      .sidebar-title {
+        font-size: 18px;
+        margin-bottom: 20px;
+        padding-left: 10px;
+        opacity: 0.8;
+      }
+      .menu-item {
+        background: none;
+        border: none;
+        color: #fff;
+        text-align: left;
+        padding: 12px 14px;
+        font-size: 15px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      .menu-item:hover { background: #2b3b4e; }
+
+      /* ----- メイン表示領域 ----- */
+      #mainContent {
+        margin-left: 220px; /* サイドバー幅と一致 */
+        padding: 20px;
+        padding-top: 60px; /* ヘッダー分の余白確保 */
+      }
+
+      /* ----- 固定ヘッダー ----- */
+      #topHeader {
+        position: fixed;
+        top: 0;
+        left: 220px; /* サイドバー幅 */
+        right: 0;
+        height: 50px;
+        background: #ffffff;
+        border-bottom: 1px solid #ccc;
+        display: flex;
+        align-items: center;
+        padding: 0 20px;
+        justify-content: space-between;
+        z-index: 9998;
+      }
+      .header-title { font-size: 18px; font-weight: bold; }
+      .header-filename {
+        flex: 1;
+        text-align: center;
+        font-size: 14px;
+        color: #555;
+      }
+      .header-save-btn {
+        padding: 6px 14px;
+        border: none;
+        background: #1f2b3a;
+        color: #fff;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+      .header-save-btn:hover { background: #2b3b4e; }
+
+      /* ----- Google翻訳風2カラムレイアウト ----- */
+      .translate-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        height: calc(100vh - 360px);
+      }
+      .translate-column {
+        display: flex;
+        flex-direction: column;
+      }
+      .translate-textarea {
+        flex: 1;
+        width: 100%;
+        padding: 9.2px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        resize: none;
+        background: #fff;
+      }
+
+       /* ----- ファイル選択ページ ----- */
+      #dropArea {
+        width: 100%;
+        height: 150px;
+        border: 2px dashed #999;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #666;
+        margin-bottom: 15px;
+        background-color: #fafafa;
+      }
+      #selectFileBtn {
+        padding: 8px 16px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        background: #f0f0f0;
+        cursor: pointer;
+      }
     </style>
-
-    <style>
-.is-hidden {
-    display: none !important; /* !importantは、他のスタイルとの競合を避けるために付加することがあります */
-}
-
-    </style>
-
-    <style>
-        .scroll-box {
-      width: 300px;       /* 横幅 */
-      height: 200px;      /* 高さ */
-      border: 1px solid #333;
-      padding: 10px;
-      overflow-y: auto;   /* 縦方向にスクロール可能 */
-      background-color: #f9f9f9;
-    }
-    </style>
-
-
   </head>
+
   <body>
-    
-    <header>
-      <div id="menu-overlay"></div>
-      <!-- ハンバーガーメニュー -->
-      <div class="menu-btn" id="menuBtn">
-        <span></span>
-        <span></span>
-        <span></span>
-      </div>
-
-      <h1>Document Master</h1>
-
-      <!-- 開閉メニュー -->
-        <nav id="headerMenu">
-        <button id="textarea-section-btn">入力</button>
-        <button id="selectFileBtn">ファイル選択</button>
-        <button id="translate-section-btn">翻訳</button>
-        </nav>
+    <!-- 固定ヘッダー -->
+    <header id="topHeader">
+      <div class="header-title">Document Master</div>
+      <div class="header-filename" id="currentFileName">選択中のファイル名なし</div>
+      <button class="header-save-btn" id="headerSaveBtn">保存</button>
     </header>
 
-    <!-- test -->
-    
-  <style>
+    <!-- 左サイドバー -->
+    <aside id="sidebar">
+      <h2 class="sidebar-title">Menu</h2>
+      <button class="menu-item" data-target="textarea-section">入力</button>
+      <button class="menu-item" data-target="file-section">ファイル選択</button>
+      <button class="menu-item" data-target="translate-section">翻訳</button>
+      <button class="menu-item" data-target="setting-section">設定</button>
+    </aside>
 
-html, body {
-  margin: 0;
-  padding: 0;
-}
-  /* ヘッダー全体 */
-header {
-  display: flex;
-  align-items: center;
-  padding: 12px 20px;   /* ← デザインそのまま維持 */
-  background: #2c3e50;
-  color: #fff;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  gap: 16px;
+    <!-- メインコンテンツ -->
+    <div id="mainContent">
 
-  /* ★ 実際の高さをここで固定（= 12px × 2 + 22px = 46px → 約 56px ） */
-  height: 56px;         /* ← ここが重要！ */
-  box-sizing: border-box;
-}
+      <!-- ファイルページ -->
+      <div id="file-section" class="page is-hidden">
+        <h2>ファイル選択</h2>
+        <p>翻訳したい資料をドラッグ＆ドロップ<br>または<br>[ファイルを選択] ボタンで選択してください。</p>
 
-  header h1 {
-    font-size: 20px;
-    margin: 0;
-    font-weight: 600;
-  }
+        <div id="dropArea">ドラッグ＆ドロップしてください</div>
+        <input type="file" id="fileInput" style="display:none;">
+        <button id="selectFileBtn">ファイルを選択</button>
+        <p id="selectedFileName" style="margin-top:10px; color:#333;">選択中のファイルなし</p>
+      </div>
 
- /* ハンバーガーメニュー */
-.menu-btn {
-  width: 24px;
-  height: 18px;
-  cursor: pointer;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
+      <!-- 設定ページ -->
+      <div id="setting-section" class="page is-hidden">
+        <h2>設定</h2>
+        <p>ここにアプリ設定が入ります。</p>
+      </div>
 
-.menu-btn span {
-  display: block;
-  height: 1.8px;
-  width: 100%;
-  background: #fff;
-  border-radius: 2px;
-  transition: 0.25s ease;
-}
-
-/* --- 開いた状態 --- */
-.menu-btn.active span:nth-child(1) {
-  transform: translateY(8px) rotate(45deg);
-}
-.menu-btn.active span:nth-child(2) {
-  opacity: 0;
-}
-.menu-btn.active span:nth-child(3) {
-  transform: translateY(-8px) rotate(-45deg);
-}
-
-/* --- 背景の暗幕（GitHubっぽいやつ） --- */
-#menu-overlay {
-  display: none;
-  position: fixed;
-  top: 56px; /* header と位置合わせ */
-  left: 0;
-  width: 100%;
-  height: calc(100vh - 56px);
-  background: rgba(0, 0, 0, 0.4);
-  z-index: 998;
-}
-
-/* --- メニュー本体（左からスライド、GitHub風） --- */
-#headerMenu {
-  position: fixed;
-  left: -260px;      /* 初期位置：画面外 */
-  top: 56px;          /* header の下 */
-  width: 260px;
-  height: calc(100vh - 56px);
-  background: #ffffff;
-  border-left: 1px solid #ddd;
-  box-shadow: -2px 0 6px rgba(0,0,0,0.08);
-  display: flex;
-  flex-direction: column;
-  padding: 15px 0;
-  transition: right 0.25s ease;
-  z-index: 999;
-}
-
-/* 開いた状態 */
-#headerMenu.open {
-  left: 0;
-}
-
-/* GitHub風ボタン */
-#headerMenu button {
-  background: none;
-  border: none;
-  color: #24292e;
-  width: 100%;
-  padding: 14px 18px;
-  text-align: left;
-  cursor: pointer;
-  font-size: 15px;
-}
-
-#headerMenu button:hover {
-  background-color: #f6f8fa;
-  color: #000;
-}
-
-  /* ナビゲーションメニュー */
-  nav {
-    position: fixed;
-    display: none;
-
-  /* ★ ヘッダーと完全一致！ */
-    top: 56px;
-
-    height: calc(100vh - 56px);
-    width: 220px;
-    background: #34495e;
-    border-right: 1px solid #2c3e50;
-    padding: 10px 0;
-    display: none;
-    flex-direction: column;
-    z-index: 999;
-  }
-
-  nav a {
-    display: block;
-    padding: 10px 15px;
-    color: #fff;
-    text-decoration: none;
-    font-size: 14px;
-  }
-
-  nav a:hover {
-    background: #3d566e;
-  }
-
-  nav.open {
-  display: flex;
-  }
-
-
-/* 入力のテキスト翻訳エリア全体 */
-  body {
-  background: #171e307c;
-  color: #fff;
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-}
-
-/* 全体の枠 */
-.translate-wrapper {
-  width: 85%;
-  max-width: 750px;
-  margin: 30px auto;
-  padding: 16px;
-  background: #69696946;
-  border-radius: 20px;
-}
-
-/* 各入力ゾーン */
-.lang-box {
-  background: #504f4faf;
-  padding: 14px;
-  border-radius: 14px;
-  margin-bottom: 18px;
-}
-
-/* 表示される「英語」「日本語」 */
-.lang-label {
-  font-size: 13px;
-  opacity: 0.8;
-  margin-bottom: 10px;
-}
-
-/* テキストボックス（入力） */
-.translate-input {
-  width: 100%;
-  height: 90px;
-  background: transparent;
-  border: none;
-  color: #fff;
-  font-size: 18px;
-  resize: none;
-  outline: none;
-}
-
-/* テキストボックス（出力） */
-.translate-output {
-  width: 100%;
-  height: 90px;
-  background: transparent;
-  border: none;
-  color: #34d1c6;
-  font-size: 18px;
-  resize: none;
-  outline: none;
-}
-
-/* 入力と出力の間のアイコン部分 */
-.switch-area {
-  display: flex;
-  justify-content: center;
-  margin: 14px 0;
-}
-
-.switch-btn {
-  font-size: 22px;
-  background: #444;
-  padding: 8px 14px;
-  border-radius: 30px;
-  cursor: pointer;
-  border: 1px solid #444;
-  user-select: none;
-}
-.switch-btn:hover {
-  background: #222;
-}
-
-
-</style>
-
-<!-- test -->
-
-    <!-- <button id="translate-section-btn">翻訳</button> -->
-
-    <!-- <button id="selectFileBtn">ファイル選択</button> -->
-
-    <p id="filePathLabel"></p>
-
-    <div id="translate-section" class="is-hidden">
-
-      <!-- <div id="tabs">
-        <button id="showTranslationBtn">翻訳ツール</button>
-        <button id="showSwaggerBtn">APIドキュメント</button>
-      </div> -->
-      
-      <hr>
-      
-      <div id="translation-container">
+      <!-- 翻訳ページ -->
+      <div id="translate-section" class="page is-hidden">
+        <hr>
+        <div id="translation-container">
           <h1>Hello from Electron renderer!</h1>
-        
           <div>
-              <button id="prevBtn">← 前</button>
-              <button id="nextBtn">次 →</button>
+            <button id="prevBtn">← 前</button>
+            <button id="nextBtn">次 →</button>
           </div>
           <p id="filePathLabel"></p>
           <p id="slideNumber"></p>
-          
-          <!-- <textarea id="fileContent" rows="15" cols="60" style="margin-top: 10px; white-space: pre-wrap;"></textarea>
-          <textarea id="translatedContent" rows="15" cols="60" style="margin-top: 10px; white-space: pre-wrap;"></textarea>
-          -->
-          <button id ="test">test</button>
-          <button id ="translateBtn">翻訳</button>
-          
+          <button id="test">test</button>
+          <button id="translateBtn">翻訳</button>
           <ul id="listDisplay"></ul>
           <button id="replaceBtn">選択行を置換</button>
-          
           <div id="slideContainer"></div>
-
-
-          <button id ="savetest">セーブテスト</button>
-          <div id="shapeInfo"  ></div>
-          
+          <button id="savetest">セーブテスト</button>
+          <div id="shapeInfo"></div>
           <button id="saveBtn">保存</button>
+        </div>
+        <button id="savefileBtn">保存するよ</button>
       </div>
-  
-      <button id="savefileBtn">保存するよ</button>
-    </div>
-    <textarea id="fileContent"></textarea>
 
-    <div id="translated-text">
+      <!-- 入力（Google翻訳風UI） -->
+      <div id="textarea-section" class="page is-hidden">
+        <div class="translate-container">
+          <div class="translate-column">
+            <h3>英語入力</h3>
+            <textarea id="inputText" class="translate-textarea" placeholder="ここに英語を入力"></textarea>
+          </div>
+          <div class="translate-column">
+            <h3>翻訳結果（日本語）</h3>
+            <textarea id="outputText" class="translate-textarea" placeholder="ここに日本語が表示"></textarea>
+          </div>
+        </div>
 
+        <!-- PPTX 設定 -->
+        <div class="pptx-setting">
+          <label>Left（インチ）:</label>
+          <input type="number" id="left-input" value="2" step="0.1" min="0" max="15">
+          <label>Top（インチ）:</label>
+          <input type="number" id="top-input" value="2" step="0.1" min="0" max="10">
+          <label>Width（インチ）:</label>
+          <input type="number" id="width-input" value="4" step="0.1">
+          <label>Height（インチ）:</label>
+          <input type="number" id="height-input" value="1.5" step="0.1">
+        </div>
 
-    </div>
+        <p>
+          デフォルトサイズ（PowerPoint標準）<br>
+          通常の標準(4:3) → Left:10インチ × Top:7.5インチ<br>
+          ワイドスクリーン(16:9) → Left:13.333インチ × Top:7.5インチ
+        </p>
+        *この基準を超えるとスライドからはみ出す可能性があります。<br>
 
+        <p>Width（textboxの横幅）<br>
+        Height（textboxの縦幅）<br>
+        1インチ=2.54センチ</p>
 
-    <!-- <button id="textarea-section-btn">入力</button> -->
-    <div id="textarea-section" class="is-hidden">
+        <button id="insert-btn">挿入する</button>
+      </div>
 
-  <!-- ▼ Google翻訳風デザイン部分 -->
-  <div class="translate-wrapper">
-
-    <div class="lang-box">
-      <div class="lang-label">英語（アメリカ）</div>
-      <textarea id="text-input" class="translate-input" placeholder="Enter text"></textarea>
-    </div>
-
-    <div class="switch-area">
-      <div class="switch-btn">⇆</div>
-    </div>
-
-    <div class="lang-box">
-      <div class="lang-label">日本語</div>
-      <textarea id="translated-text" class="translate-output" placeholder="テキストを入力"></textarea>
-    </div>
-
-  </div>
-
-
-  <!-- ▼★ ここから下はあなたが残したい部分（そのまま残す） -->
-  <div class="pptx-setting">
-    <label>Left（インチ）:</label>
-    <input type="number" id="left-input" value="2" step="0.1" min="0" max="15">
-
-    <label>Top（インチ）:</label>
-    <input type="number" id="top-input" value="2" step="0.1" min="0" max="10">
-
-    <label>Width（インチ）:</label>
-    <input type="number" id="width-input" value="4" step="0.1">
-
-    <label>Height（インチ）:</label>
-    <input type="number" id="height-input" value="1.5" step="0.1">
-  </div>
-
-  <p>
-    デフォルトサイズ（PowerPoint標準）<br>
-    通常の標準(4:3) → Left:10インチ × Top:7.5インチ<br>
-    ワイドスクリーン(16:9) → Left:13.333インチ × Top:7.5インチ
-  </p>
-  *この基準を超えるとスライドからはみ出す可能性があります。<br>
-
-  <p>Width（textboxの横幅）<br>
-  Height（textboxの縦幅）<br>
-  1インチ=2.54センチ</p>
-
-  <button id="insert-btn">挿入する</button>
-
-</div>
-
-
-  <button id="openModalBtn">翻訳する資料を選ぶ</button>
-
-<!-- ▼ モーダル本体 -->
-<div id="modal" class="modal">
-  <div class="modal-content">
-    <span id="closeModalBtn" class="close">&times;</span>
-    
-    <h2>翻訳したい資料を選択してください</h2>
-
-    <!-- ▼ ファイル選択 -->
-    <input type="file" id="fileInput" />
-
-  </div>
-</div>
-
-<style>
-/* ----- モーダル背景 ----- */
-.modal {
-  display: none;  
-  position: fixed;
-  z-index: 1000;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.5);
-}
-
-/* ----- モーダルの中身 ----- */
-.modal-content {
-  background: #fff;
-  margin: 12% auto;
-  padding: 20px 30px;
-  border-radius: 10px;
-  width: 350px;
-  text-align: center;
-  box-shadow: 0 0 20px rgba(0,0,0,0.2);
-}
-
-/* 閉じるボタン */
-.close {
-  float: right;
-  font-size: 24px;
-  cursor: pointer;
-}
-
-input[type="file"] {
-  margin-top: 20px;
-}
-
-nav {
-    display: none;
-}
-
-nav.open {
-    display: flex;
-}
-</style>
-  
-
-<!-- 
-    <div id="swagger-container" class="hidden">
-        <h2>APIドキュメント</h2>
-        <div id="swagger-ui"></div>
-    </div> -->
-    
-    <script src="renderer.js"></script> 
+    <!-- JS -->
+    <script src="renderer.js"></script>
     <script src="insert.js"></script>
     <script src="./node_modules/swagger-ui-dist/swagger-ui-bundle.js"></script>
     <script src="./node_modules/swagger-ui-dist/swagger-ui-standalone-preset.js"></script>
 
-    <!-- test -->
     <script>
-      const menuBtn = document.getElementById("menuBtn");
-      const headerMenu = document.getElementById("headerMenu");
-      const overlay = document.getElementById("menu-overlay");
+      // ページ切替
+      const pages = document.querySelectorAll('.page');
+      document.querySelectorAll('.menu-item').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const target = btn.dataset.target;
+          pages.forEach(p => p.classList.add('is-hidden'));
+          const page = document.getElementById(target);
+          if (page) page.classList.remove('is-hidden');
+        });
+      });
+      // 初期ページ
+      document.getElementById('textarea-section').classList.remove('is-hidden');
 
-menuBtn.addEventListener("click", () => {
-  menuBtn.classList.toggle("active");
-  headerMenu.classList.toggle("open");
-  overlay.style.display = headerMenu.classList.contains("open") ? "block" : "none";
-});
+      // ファイル選択処理
+      const dropArea = document.getElementById("dropArea");
+      const fileInput = document.getElementById("fileInput");
+      const selectFileBtn = document.getElementById("selectFileBtn");
+      const selectedFileName = document.getElementById("selectedFileName");
 
-overlay.addEventListener("click", () => {
-  menuBtn.classList.remove("active");
-  headerMenu.classList.remove("open");
-  overlay.style.display = "none";
-});
+      dropArea.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropArea.style.borderColor = "#666";
+        dropArea.style.backgroundColor = "#f0f0f0";
+      });
 
-      
+      dropArea.addEventListener("dragleave", () => {
+        dropArea.style.borderColor = "#999";
+        dropArea.style.backgroundColor = "#fafafa";
+      });
+
+      dropArea.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropArea.style.borderColor = "#999";
+        dropArea.style.backgroundColor = "#fafafa";
+
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          selectedFileName.textContent = files[0].name;
+          console.log(files[0]);
+        }
+      });
+
+      selectFileBtn.addEventListener("click", () => fileInput.click());
+
+      fileInput.addEventListener("change", () => {
+        if (fileInput.files.length > 0) {
+          selectedFileName.textContent = fileInput.files[0].name;
+          console.log(fileInput.files[0]);
+        }
+      });
     </script>
-
-    <script>
-document.getElementById("openModalBtn").onclick = () => {
-  document.getElementById("modal").style.display = "block";
-};
-
-document.getElementById("closeModalBtn").onclick = () => {
-  document.getElementById("modal").style.display = "none";
-};
-
-// 背景クリックで閉じる
-window.onclick = (event) => {
-  if (event.target === document.getElementById("modal")) {
-    document.getElementById("modal").style.display = "none";
-  }
-};
-</script>
-
 
   </body>
 </html>
-
-
-
-
