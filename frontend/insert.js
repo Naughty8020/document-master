@@ -8,13 +8,15 @@ const insertBtn = document.getElementById("insert-btn");
 
 
 translateSectionbtn.addEventListener("click", () => {
-    translateSection.classList.toggle('is-hidden');
-}   );
+    translateSection.classList.remove('is-hidden');  // これを表示
+    textareaSection.classList.add('is-hidden');      // こっちは隠す
+});
 
 textareaSectionbtn.addEventListener("click", () => {
-    textareaSection.classList.toggle('is-hidden');
+    textareaSection.classList.remove('is-hidden');   // これを表示
+    translateSection.classList.add('is-hidden');    // こっちは隠す
 });
-    
+
 
 
 
