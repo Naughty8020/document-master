@@ -14,10 +14,6 @@ textareaSectionbtn.addEventListener("click", () => {
     textareaSection.classList.remove('is-hidden');   // これを表示
     translateSection.classList.add('is-hidden');    // こっちは隠す
 });
-<<<<<<< HEAD
-
-=======
->>>>>>> 64ef2423221b9b945c2b6a2ff2796bc64093f954
 
 
 
