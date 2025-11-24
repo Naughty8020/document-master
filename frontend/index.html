@@ -3,22 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <title>Hello Electron</title>
-    <!-- NOTE: 元のCSSはそのまま維持しつつ、Step1（サイドバー導入）に必要な部分のみ調整しています -->
     <link rel="stylesheet" type="text/css" href="./node_modules/swagger-ui-dist/swagger-ui.css" >
     <style>
-      /* ----- リスト表示（元コード維持） ----- */
-      #listDisplay { list-style: none; padding: 0; }
-      #listDisplay li { 
-        margin: 5px 0; padding: 8px 12px; border: 1px solid #ccc; 
-        border-radius: 4px; cursor: pointer; background-color: #f9f9f9; 
-        transition: background-color 0.1s ease; 
-      }
-      #listDisplay li:hover { background-color: #e0e0e0; }
-
+      /* ----- 共通クラス ----- */
       .hidden { display: none; }
       .is-hidden { display: none !important; }
 
-      /* ----- スクロールBOX（元まま） ----- */
+      /* ----- スクロールBOX ----- */
       .scroll-box {
         width: 300px;
         height: 200px;
@@ -28,7 +19,7 @@
         background-color: #f9f9f9;
       }
 
-      /* ----- Step1: 左サイドバー配置（ここが今回の変更点） ----- */
+      /* ----- 左サイドバー ----- */
       #sidebar {
         position: fixed;
         left: 0;
@@ -62,236 +53,14 @@
       }
       .menu-item:hover { background: #2b3b4e; }
 
-      /* ----- メイン表示領域：サイドバーの右側に表示 ----- */
+      /* ----- メイン表示領域 ----- */
       #mainContent {
-        margin-left: 220px; /* ★サイドバー幅と一致 */
-        padding: 20px;
-      }
-    </style>
-  </head>
-
-  <body>
-
-    <!-- ▼ 左サイドバー（Step1 完成版） -->
-    <aside id="sidebar">
-      <h2 class="sidebar-title">Menu</h2>
-      <button class="menu-item" data-target="textarea-section">入力</button>
-      <button class="menu-item" data-target="file-section">ファイル選択</button>
-      <button class="menu-item" data-target="translate-section">翻訳</button>
-      <button class="menu-item" data-target="setting-section">設定</button>
-    </aside>
-
-    <!-- ▼ 右側コンテンツ全体 -->
-    <div id="mainContent">
-
-      <!-- ▼ ▼ ▼ ここから下はすべて元コードを保持しつつ必要最低限の調整のみ ▼ ▼ ▼ -->
-
-      <!-- 不要になったハンバーガーメニュー関連のHTMLは削除済（Step1で置き換えたため） -->
-
-      <p id="filePathLabel"></p>
-
-      <div id="translate-section" class="page is-hidden">
-        <hr>
-        <div id="translation-container">
-          <h1>Hello from Electron renderer!</h1>
-          <div>
-            <button id="prevBtn">← 前</button>
-            <button id="nextBtn">次 →</button>
-          </div>
-          <p id="filePathLabel"></p>
-          <p id="slideNumber"></p>
-          <button id="test">test</button>
-          <button id="translateBtn">翻訳</button>
-          <ul id="listDisplay"></ul>
-          <button id="replaceBtn">選択行を置換</button>
-          <div id="slideContainer"></div>
-          <button id="savetest">セーブテスト</button>
-          <div id="shapeInfo"></div>
-          <button id="saveBtn">保存</button>
-        </div>
-        <button id="savefileBtn">保存するよ</button>
-      </div>
-
-      <textarea id="fileContent"></textarea>
-
-      <div id="translated-text"></div>
-
-
-      <!-- ▼ 入力（Google翻訳風UI） -->
-      <div id="textarea-section" class="page is-hidden">
-        <div class="translate-wrapper">
-          <div class="lang-box">
-            <div class="lang-label">英語（アメリカ）</div>
-            <textarea id="text-input" class="translate-input" placeholder="Enter text"></textarea>
-          </div>
-
-          <div class="switch-area">
-            <div class="switch-btn">⇆</div>
-          </div>
-
-          <div class="lang-box">
-            <div class="lang-label">日本語</div>
-            <textarea id="translated-text" class="translate-output" placeholder="テキストを入力"></textarea>
-          </div>
-        </div>
-
-        <!-- 残すべき PPTX 設定部分（元のまま） -->
-        <div class="pptx-setting">
-          <label>Left（インチ）:</label>
-          <input type="number" id="left-input" value="2" step="0.1" min="0" max="15">
-          <label>Top（インチ）:</label>
-          <input type="number" id="top-input" value="2" step="0.1" min="0" max="10">
-          <label>Width（インチ）:</label>
-          <input type="number" id="width-input" value="4" step="0.1">
-          <label>Height（インチ）:</label>
-          <input type="number" id="height-input" value="1.5" step="0.1">
-        </div>
-
-        <p>
-          デフォルトサイズ（PowerPoint標準）<br>
-          通常の標準(4:3) → Left:10インチ × Top:7.5インチ<br>
-          ワイドスクリーン(16:9) → Left:13.333インチ × Top:7.5インチ
-        </p>
-        *この基準を超えるとスライドからはみ出す可能性があります。<br>
-
-        <p>Width（textboxの横幅）<br>
-        Height（textboxの縦幅）<br>
-        1インチ=2.54センチ</p>
-
-        <button id="insert-btn">挿入する</button>
-      </div>
-
-
-      <!-- ▼ モーダル表示（ファイル選択） -->
-      <button id="openModalBtn">翻訳する資料を選ぶ</button>
-
-      <div id="modal" class="modal">
-        <div class="modal-content">
-          <span id="closeModalBtn" class="close">&times;</span>
-          <h2>翻訳したい資料を選択してください</h2>
-          <input type="file" id="fileInput" />
-        </div>
-      </div>
-
-      <style>
-        .modal {
-          display: none;
-          position: fixed;
-          z-index: 1000;
-          left: 0;
-          top: 0;
-          width: 100%;
-          height: 100%;
-          background: rgba(0,0,0,0.5);
-        }
-        .modal-content {
-          background: #fff;
-          margin: 12% auto;
-          padding: 20px 30px;
-          border-radius: 10px;
-          width: 350px;
-          text-align: center;
-          box-shadow: 0 0 20px rgba(0,0,0,0.2);
-        }
-        .close {
-          float: right;
-          font-size: 24px;
-          cursor: pointer;
-        }
-      </style>
-
-      <script src="renderer.js"></script>
-      <script src="insert.js"></script>
-      <script src="./node_modules/swagger-ui-dist/swagger-ui-bundle.js"></script>
-      <script src="./node_modules/swagger-ui-dist/swagger-ui-standalone-preset.js"></script>
-
-      <!-- ▼ Step1: サイドバーのページ切替スクリプト（唯一の変更点） -->
-      <script>
-        document.querySelectorAll(".menu-item").forEach(btn => {
-          btn.addEventListener("click", () => {
-            const target = btn.dataset.target;
-            document.querySelectorAll(".page").forEach(page => {
-              page.classList.add("is-hidden");
-            });
-            document.getElementById(target).classList.remove("is-hidden");
-          });
-        });
-      </script>
-
-      <script>
-        // モーダル
-        document.getElementById("openModalBtn").onclick = () => {
-          document.getElementById("modal").style.display = "block";
-        };
-        document.getElementById("closeModalBtn").onclick = () => {
-          document.getElementById("modal").style.display = "none";
-        };
-        window.onclick = (event) => {
-          if (event.target === document.getElementById("modal")) {
-            document.getElementById("modal").style.display = "none";
-          }
-        };
-      </script>
-
-    </div> <!-- /mainContent -->
-  </body>
-</html>
-  <style>
-      .hidden { display: none; }
-      .is-hidden { display: none !important; }
-
-      /* ----- スクロールBOX（元まま） ----- */
-      .scroll-box {
-        width: 300px;
-        height: 200px;
-        border: 1px solid #333;
-        padding: 10px;
-        overflow-y: auto;
-        background-color: #f9f9f9;
-      }
-
-      /* ----- Step1: 左サイドバー配置（ここが今回の変更点） ----- */
-      #sidebar {
-        position: fixed;
-        left: 0;
-        top: 0;
-        width: 220px;
-        height: 100vh;
-        background: #1f2b3a;
-        color: #fff;
-        padding: 20px 10px;
-        box-sizing: border-box;
-        border-right: 1px solid #2c3e50;
-        display: flex;
-        flex-direction: column;
-        z-index: 9999;
-      }
-      .sidebar-title {
-        font-size: 18px;
-        margin-bottom: 20px;
-        padding-left: 10px;
-        opacity: 0.8;
-      }
-      .menu-item {
-        background: none;
-        border: none;
-        color: #fff;
-        text-align: left;
-        padding: 12px 14px;
-        font-size: 15px;
-        border-radius: 6px;
-        cursor: pointer;
-      }
-      .menu-item:hover { background: #2b3b4e; }
-
-      /* ----- メイン表示領域：サイドバーの右側に表示 ----- */
-      #mainContent {
-        margin-left: 220px; /* ★サイドバー幅と一致 */
+        margin-left: 220px; /* サイドバー幅と一致 */
         padding: 20px;
         padding-top: 60px; /* ヘッダー分の余白確保 */
       }
 
-      /* ▼ 固定ヘッダーのスタイル（Step2） */
+      /* ----- 固定ヘッダー ----- */
       #topHeader {
         position: fixed;
         top: 0;
@@ -306,9 +75,7 @@
         justify-content: space-between;
         z-index: 9998;
       }
-      .header-title {
-        font-size: 18px; font-weight: bold;
-      }
+      .header-title { font-size: 18px; font-weight: bold; }
       .header-filename {
         flex: 1;
         text-align: center;
@@ -323,24 +90,62 @@
         border-radius: 6px;
         cursor: pointer;
       }
-      .header-save-btn:hover {
-        background: #2b3b4e;
+      .header-save-btn:hover { background: #2b3b4e; }
+
+      /* ----- Google翻訳風2カラムレイアウト ----- */
+      .translate-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        height: calc(100vh - 360px);
+      }
+      .translate-column {
+        display: flex;
+        flex-direction: column;
+      }
+      .translate-textarea {
+        flex: 1;
+        width: 100%;
+        padding: 9.2px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        resize: none;
+        background: #fff;
+      }
+
+       /* ----- ファイル選択ページ ----- */
+      #dropArea {
+        width: 100%;
+        height: 150px;
+        border: 2px dashed #999;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #666;
+        margin-bottom: 15px;
+        background-color: #fafafa;
+      }
+      #selectFileBtn {
+        padding: 8px 16px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        background: #f0f0f0;
+        cursor: pointer;
       }
     </style>
   </head>
 
   <body>
-
-
-
-    <!-- ▼ 固定ヘッダー（Step2 追加） -->
+    <!-- 固定ヘッダー -->
     <header id="topHeader">
       <div class="header-title">Document Master</div>
       <div class="header-filename" id="currentFileName">選択中のファイル名なし</div>
       <button class="header-save-btn" id="headerSaveBtn">保存</button>
     </header>
 
-    <!-- ▼ 左サイドバー（Step1 完成版） -->
+    <!-- 左サイドバー -->
     <aside id="sidebar">
       <h2 class="sidebar-title">Menu</h2>
       <button class="menu-item" data-target="textarea-section">入力</button>
@@ -349,23 +154,27 @@
       <button class="menu-item" data-target="setting-section">設定</button>
     </aside>
 
-    <!-- ▼ 右側コンテンツ全体 -->
+    <!-- メインコンテンツ -->
     <div id="mainContent">
+
+      <!-- ファイルページ -->
       <div id="file-section" class="page is-hidden">
         <h2>ファイル選択</h2>
-        <p>左のメニューから「翻訳する資料を選ぶ」を押してください。</p>
+        <p>翻訳したい資料をドラッグ＆ドロップ<br>または<br>[ファイルを選択] ボタンで選択してください。</p>
+
+        <div id="dropArea">ドラッグ＆ドロップしてください</div>
+        <input type="file" id="fileInput" style="display:none;">
+        <button id="selectFileBtn">ファイルを選択</button>
+        <p id="selectedFileName" style="margin-top:10px; color:#333;">選択中のファイルなし</p>
       </div>
 
+      <!-- 設定ページ -->
       <div id="setting-section" class="page is-hidden">
         <h2>設定</h2>
         <p>ここにアプリ設定が入ります。</p>
       </div>
-      <!-- ▼ ▼ ▼ ここから下はすべて元コードを保持しつつ必要最低限の調整のみ ▼ ▼ ▼ -->
 
-      <!-- 不要になったハンバーガーメニュー関連のHTMLは削除済（Step1で置き換えたため） -->
-
-      <p id="filePathLabel"></p>
-
+      <!-- 翻訳ページ -->
       <div id="translate-section" class="page is-hidden">
         <hr>
         <div id="translation-container">
@@ -388,30 +197,20 @@
         <button id="savefileBtn">保存するよ</button>
       </div>
 
-      <textarea id="fileContent"></textarea>
-
-      <div id="translated-text"></div>
-
-
-      <!-- ▼ 入力（Google翻訳風UI） -->
+      <!-- 入力（Google翻訳風UI） -->
       <div id="textarea-section" class="page is-hidden">
-        <div class="translate-wrapper">
-          <div class="lang-box">
-            <div class="lang-label">英語（アメリカ）</div>
-            <textarea id="text-input" class="translate-input" placeholder="Enter text"></textarea>
+        <div class="translate-container">
+          <div class="translate-column">
+            <h3>英語入力</h3>
+            <textarea id="inputText" class="translate-textarea" placeholder="ここに英語を入力"></textarea>
           </div>
-
-          <div class="switch-area">
-            <div class="switch-btn">⇆</div>
-          </div>
-
-          <div class="lang-box">
-            <div class="lang-label">日本語</div>
-            <textarea id="translated-text" class="translate-output" placeholder="テキストを入力"></textarea>
+          <div class="translate-column">
+            <h3>翻訳結果（日本語）</h3>
+            <textarea id="outputText" class="translate-textarea" placeholder="ここに日本語が表示"></textarea>
           </div>
         </div>
 
-        <!-- 残すべき PPTX 設定部分（元のまま） -->
+        <!-- PPTX 設定 -->
         <div class="pptx-setting">
           <label>Left（インチ）:</label>
           <input type="number" id="left-input" value="2" step="0.1" min="0" max="15">
@@ -437,84 +236,64 @@
         <button id="insert-btn">挿入する</button>
       </div>
 
+    <!-- JS -->
+    <script src="renderer.js"></script>
+    <script src="insert.js"></script>
+    <script src="./node_modules/swagger-ui-dist/swagger-ui-bundle.js"></script>
+    <script src="./node_modules/swagger-ui-dist/swagger-ui-standalone-preset.js"></script>
 
-      <!-- ▼ モーダル表示（ファイル選択） -->
-      <button id="openModalBtn">翻訳する資料を選ぶ</button>
-
-      <div id="modal" class="modal">
-        <div class="modal-content">
-          <span id="closeModalBtn" class="close">&times;</span>
-          <h2>翻訳したい資料を選択してください</h2>
-          <input type="file" id="fileInput" />
-        </div>
-      </div>
-
-      <style>
-        .modal {
-          display: none;
-          position: fixed;
-          z-index: 1000;
-          left: 0;
-          top: 0;
-          width: 100%;
-          height: 100%;
-          background: rgba(0,0,0,0.5);
-        }
-        .modal-content {
-          background: #fff;
-          margin: 12% auto;
-          padding: 20px 30px;
-          border-radius: 10px;
-          width: 350px;
-          text-align: center;
-          box-shadow: 0 0 20px rgba(0,0,0,0.2);
-        }
-        .close {
-          float: right;
-          font-size: 24px;
-          cursor: pointer;
-        }
-      </style>
-
-      <script src="renderer.js"></script>
-      <script src="insert.js"></script>
-      <script src="./node_modules/swagger-ui-dist/swagger-ui-bundle.js"></script>
-      <script src="./node_modules/swagger-ui-dist/swagger-ui-standalone-preset.js"></script>
-
-      <!-- ▼ Step1: サイドバーのページ切替スクリプト（唯一の変更点） -->
-      <script>
-        // ▼ Step3：ページ切り替えスクリプト
-        const pages = document.querySelectorAll('.page');
-
-        document.querySelectorAll('.menu-item').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const target = btn.dataset.target;
-            pages.forEach(p => p.classList.add('is-hidden'));
-            const page = document.getElementById(target);
-            if (page) page.classList.remove('is-hidden');
-          });
+    <script>
+      // ページ切替
+      const pages = document.querySelectorAll('.page');
+      document.querySelectorAll('.menu-item').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const target = btn.dataset.target;
+          pages.forEach(p => p.classList.add('is-hidden'));
+          const page = document.getElementById(target);
+          if (page) page.classList.remove('is-hidden');
+        });
       });
-
-
       // 初期ページ
       document.getElementById('textarea-section').classList.remove('is-hidden');
+
+      // ファイル選択処理
+      const dropArea = document.getElementById("dropArea");
+      const fileInput = document.getElementById("fileInput");
+      const selectFileBtn = document.getElementById("selectFileBtn");
+      const selectedFileName = document.getElementById("selectedFileName");
+
+      dropArea.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropArea.style.borderColor = "#666";
+        dropArea.style.backgroundColor = "#f0f0f0";
+      });
+
+      dropArea.addEventListener("dragleave", () => {
+        dropArea.style.borderColor = "#999";
+        dropArea.style.backgroundColor = "#fafafa";
+      });
+
+      dropArea.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropArea.style.borderColor = "#999";
+        dropArea.style.backgroundColor = "#fafafa";
+
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          selectedFileName.textContent = files[0].name;
+          console.log(files[0]);
+        }
+      });
+
+      selectFileBtn.addEventListener("click", () => fileInput.click());
+
+      fileInput.addEventListener("change", () => {
+        if (fileInput.files.length > 0) {
+          selectedFileName.textContent = fileInput.files[0].name;
+          console.log(fileInput.files[0]);
+        }
+      });
     </script>
 
-      <script>
-        // モーダル
-        document.getElementById("openModalBtn").onclick = () => {
-          document.getElementById("modal").style.display = "block";
-        };
-        document.getElementById("closeModalBtn").onclick = () => {
-          document.getElementById("modal").style.display = "none";
-        };
-        window.onclick = (event) => {
-          if (event.target === document.getElementById("modal")) {
-            document.getElementById("modal").style.display = "none";
-          }
-        };
-      </script>
-
-    </div> <!-- /mainContent -->
   </body>
 </html>
