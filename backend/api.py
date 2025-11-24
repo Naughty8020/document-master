@@ -236,7 +236,7 @@ async def api_translate_text(file_data: FileData):
                 idx += 1
 
     
-    print("翻訳完了:", file_data)
+    # print("翻訳完了:", file_data)
 
     return {"status": "ok", "translated_text": file_data}
 
@@ -244,24 +244,24 @@ async def api_translate_text(file_data: FileData):
 
 
 
-@app.post("/update_slide")
-def update_slide(data: SlidesPayload):
-    global prs, filepath
-    if prs is None:
-        # prsがNoneの場合、ファイルを再ロードする（グローバル変数の状態がリセットされた場合を想定）
-        prs = Presentation(filepath) 
+# @app.post("/update_slide")
+# def update_slide(data: SlidesPayload):
+#     global prs, filepath
+#     if prs is None:
+#         # prsがNoneの場合、ファイルを再ロードする（グローバル変数の状態がリセットされた場合を想定）
+#         prs = Presentation(filepath) 
 
-    for slide_item in data.slides:
-        slide = prs.slides[slide_item.slide_index]
-        for shape_item in slide_item.shapes:
-            shape = slide.shapes[shape_item.shape_index]
-            if shape.has_text_frame:
-                # この実装はシェイプ全体のテキストを置き換えます
-                shape.text = shape_item.translated_text
+#     for slide_item in data.slides:
+#         slide = prs.slides[slide_item.slide_index]
+#         for shape_item in slide_item.shapes:
+#             shape = slide.shapes[shape_item.shape_index]
+#             if shape.has_text_frame:
+#                 # この実装はシェイプ全体のテキストを置き換えます
+#                 shape.text = shape_item.translated_text
 
-    # update_slideでは保存しない（savefileでまとめて保存する想定）
-    # prs.save(filepath) 
-    return {"status": "ok"}
+#     # update_slideでは保存しない（savefileでまとめて保存する想定）
+#     # prs.save(filepath) 
+#     return {"status": "ok"}
 
 # ----------------------------------------------------
 # /test (シェイプの座標取得)
@@ -412,8 +412,8 @@ def insert_slide(data: TextData):
 
     try:
         # 💡 修正点2: tryブロック内の処理を正しくインデント
-        print("インサートのパス",filepath)
-        print(data.left,data.top,data.width,data.height) 
+        # print("インサートのパス",filepath)
+        # print(data.left,data.top,data.width,data.height) 
 
         slide = prs.slides[0]
         
@@ -437,7 +437,7 @@ def insert_slide(data: TextData):
         p.text = data.text
         # ファイルが見つかった場合の処理をここに続ける
         print(f"ファイル 'input.pptx' を開きました。")
-        print(f"受け取ったテキスト: {data.text}")
+        # print(f"受け取ったテキスト: {data.text}")
 
         prs.save(filepath)
         print(f"テキストボックスを追加し、ファイルを保存しました。")
