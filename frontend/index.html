@@ -340,7 +340,7 @@ header {
   
       <button id="savefileBtn">保存するよ</button>
     </div>
-
+    <textarea id="fileContent"></textarea>
 
     <div id="translated-text">
 
@@ -451,9 +451,17 @@ header {
 input[type="file"] {
   margin-top: 20px;
 }
+
+nav {
+    display: none;
+}
+
+nav.open {
+    display: flex;
+}
 </style>
   
-  
+
 <!-- 
     <div id="swagger-container" class="hidden">
         <h2>APIドキュメント</h2>
