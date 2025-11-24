@@ -457,16 +457,35 @@ def insert_slide(data: TextData):
     return {"status": "ok", "message": "新しいスライドを追加しました。"}
 
 
-class TranslateData(BaseModel):
+
+class ShapeItem(BaseModel):
+    shape_index: int
     text: str
 
-@app.post("/insert-translate")
-def insert_translate(data: TranslateData):
-    print(data)
-    print("翻訳するテキスト:", data.text)
-    translated_text = translate_text(data.text)  # data.text にアクセスする
-    return {
-        "status": "ok",
-        "message": "翻訳して挿入しました。",
-        "translated_text": translated_text
-    }
+class SavePayload(BaseModel):
+    slide_index: int
+    shapes: list[ShapeItem]
+
+
+@app.post("/saveppt")
+def saveppt(data: SavePayload):
+    global prs, filepath
+
+    slide = prs.slides[data.slide_index]
+
+    for item in data.shapes:
+        try:
+            shape = slide.shapes[item.shape_index]
+        except:
+            continue
+
+        if not shape.has_text_frame:
+            continue
+
+        tf = shape.text_frame
+        tf.clear()
+        tf.text = item.text
+
+    prs.save(filepath)
+
+    return {"status": "ok"}

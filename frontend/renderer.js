@@ -246,6 +246,7 @@ nextBtn.addEventListener("click", () => {
 // ---------------------
 // ★ 保存ロジック
 // ---------------------
+// --- 保存ボタン ---
 saveBtn.addEventListener("click", async () => {
     const slideData = slides.map((slide) => ({
         slide_index: slide.index,
