@@ -4,6 +4,13 @@
     <meta charset="UTF-8" />
     <title>Hello Electron</title>
     <link rel="stylesheet" type="text/css" href="./node_modules/swagger-ui-dist/swagger-ui.css" >
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Shippori+Antique&display=swap%22 rel="stylesheet">
     <style>
       /* ----- 共通クラス ----- */
       .hidden { display: none; }
@@ -16,7 +23,7 @@
         border: 1px solid #333;
         padding: 10px;
         overflow-y: auto;
-        background-color: #f9f9f9;
+        background-color: #EEEEEE	;
       }
 
       /* ----- 左サイドバー ----- */
@@ -26,38 +33,52 @@
         top: 0;
         width: 220px;
         height: 100vh;
-        background: #1f2b3a;
-        color: #fff;
-        padding: 20px 10px;
+        background: #e7eaf3	;
+        color: #7b7b8a;
+        padding: 15px 15px;
         box-sizing: border-box;
-        border-right: 1px solid #2c3e50;
+        border-right: 3px solid #e4e7ed;
         display: flex;
         flex-direction: column;
         z-index: 9999;
       }
       .sidebar-title {
-        font-size: 18px;
-        margin-bottom: 20px;
+        font-size: 20px;
+        margin-bottom: 18px;
         padding-left: 10px;
         opacity: 0.8;
+        margin-top:0px;
+        color: #212c4c;
+        font-family: "Mochiy Pop One", sans-serif;   
+        font-weight: 700;   
+        font-style: normal; 
       }
       .menu-item {
         background: none;
         border: none;
-        color: #fff;
+        color: #7a7f97;
         text-align: left;
         padding: 12px 14px;
         font-size: 15px;
         border-radius: 6px;
         cursor: pointer;
       }
-      .menu-item:hover { background: #2b3b4e; }
+      .menu-div:hover,
+      .menu-div:hover .menu-item {
+        color: #195ff2;
+      }
+
 
       /* ----- メイン表示領域 ----- */
       #mainContent {
         margin-left: 220px; /* サイドバー幅と一致 */
         padding: 20px;
         padding-top: 60px; /* ヘッダー分の余白確保 */
+      }
+
+      body{
+        font-family: Arial, sans-serif;
+        background-color: #f1f5fa;
       }
 
       /* ----- 固定ヘッダー ----- */
@@ -68,14 +89,20 @@
         right: 0;
         height: 50px;
         background: #ffffff;
-        border-bottom: 1px solid #ccc;
         display: flex;
         align-items: center;
         padding: 0 20px;
         justify-content: space-between;
         z-index: 9998;
+        color: #212c4c
       }
-      .header-title { font-size: 18px; font-weight: bold; }
+      .header-title { 
+        font-size: 18px; 
+        font-weight: bold; 
+        font-family: "Mochiy Pop One", sans-serif;   
+        font-weight: 700;   
+        font-style: normal; 
+      }
       .header-filename {
         flex: 1;
         text-align: center;
@@ -134,24 +161,45 @@
         background: #f0f0f0;
         cursor: pointer;
       }
+
+      .material-icons { font-size: 22px; vertical-align: middle; }
+      
     </style>
   </head>
 
   <body>
     <!-- 固定ヘッダー -->
     <header id="topHeader">
-      <div class="header-title">Document Master</div>
+      <div class="header-title">入力</div>
       <div class="header-filename" id="currentFileName">選択中のファイル名なし</div>
       <button class="header-save-btn" id="headerSaveBtn">保存</button>
     </header>
 
     <!-- 左サイドバー -->
     <aside id="sidebar">
-      <h2 class="sidebar-title">Menu</h2>
-      <button class="menu-item" data-target="textarea-section">入力</button>
-      <button class="menu-item" data-target="file-section">ファイル選択</button>
-      <button class="menu-item" data-target="translate-section">翻訳</button>
-      <button class="menu-item" data-target="setting-section">設定</button>
+      <h2 class="sidebar-title">Document Master</h2>
+      
+      <div class="menu-div">
+        <span class="material-icons">file_open</span>
+        <button class="menu-item" data-target="file-section">ファイル選択</button>
+      </div>
+
+      <div class="menu-div">
+        <span class="material-icons">translate</span>
+        <button class="menu-item" data-target="translate-section">翻訳</button>
+      </div>
+
+      <div class="menu-div">
+        <span class="material-icons">edit_note</span>
+        <button class="menu-item" data-target="textarea-section">入力</button>
+      </div>
+
+      <div class="menu-div">
+        <span class="material-icons">settings</span>
+        <button class="menu-item" data-target="setting-section">設定</button>
+        
+      </div>
+    
     </aside>
 
     <!-- メインコンテンツ -->
