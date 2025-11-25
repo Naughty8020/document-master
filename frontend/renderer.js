@@ -150,6 +150,8 @@ btn.addEventListener("click", async () => {
         fileData = data;
         slides = data.slides;
         document.getElementById("slideCountText").textContent = `1 / ${slides.length}`;
+
+        
         selectedFilePath = data.path;
         slidesData = data;
 
