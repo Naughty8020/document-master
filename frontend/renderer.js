@@ -140,6 +140,8 @@ replaceBtn.addEventListener("click", () => {
 // ---------------------
 // ★ ファイル選択
 // ---------------------
+const filename = document.getElementById("currentFileName");
+
 btn.addEventListener("click", async () => {
     try {
         const res = await fetch("http://127.0.0.1:8000/get_file");
@@ -148,33 +150,35 @@ btn.addEventListener("click", async () => {
         fileData = data;
         slides = data.slides;
         document.getElementById("slideCountText").textContent = `1 / ${slides.length}`;
-
         selectedFilePath = data.path;
         slidesData = data;
 
-        // console.log("aaa", data);
+        console.log("Selected file data:", data);
+        console.log("filename element:", data.filename);
 
+        // エラーがあれば表示して終了
         if (data.error) {
-            p.innerText = `Error: ${data.error}`;
+            if (p) p.textContent = `Error: ${data.error}`;
             return;
         }
 
-        p.innerText = `選択したファイル: ${data.filename}`;
+        // ファイル名表示
+        if (filename) {
+            filename.textContent = `${data.filename || "無題"}`;
+        }
 
-        // 🔥 これが超重要
-        // ---------------------------------------
+        // 初期スライド表示
         currentIndex = 0;
         renderSlideSelector(data.slides);
-
         showSlide(0);
-        
-        // ---------------------------------------
 
     } catch (err) {
-        console.error(err);
-        p.innerText = "通信エラー";
+        console.error("通信または表示エラー:", err);
+        
     }
 });
+
+
 
 // ---------------------
 // ★ 翻訳
