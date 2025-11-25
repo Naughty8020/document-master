@@ -112,7 +112,7 @@
       .header-save-btn {
         padding: 6px 14px;
         border: none;
-        background: #1f2b3a;
+        background: #534ff1;
         color: #fff;
         border-radius: 6px;
         cursor: pointer;
@@ -166,53 +166,108 @@
       .material-icons { font-size: 22px; vertical-align: middle; }
 
       .slide-card {
-  position: absolute;
-  top: 40px; /* ボタンの下あたりに出す */
-  left: 0;
-  background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  padding: 10px;
-  width: 180px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  z-index: 9999; /* 他のテキストに完全にかぶる */
-  opacity: 1;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
+        position: absolute;
+        top: 40px; /* ボタンの下あたりに出す */
+        left: 0;
+        background: #fff;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        padding: 10px;
+        width: 180px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        z-index: 9999; /* 他のテキストに完全にかぶる */
+        opacity: 1;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+      }
 
-.slide-card.is-hidden {
-  opacity: 0;
-  transform: translateY(-8px);
-  pointer-events: none;
-}
+      .slide-card.is-hidden {
+        opacity: 0;
+        transform: translateY(-8px);
+        pointer-events: none;
+      }
 
-.slide-card-item {
-  padding: 8px;
-  border-radius: 6px;
-  cursor: pointer;
-}
+      .slide-card-item {
+        padding: 8px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
 
-.slide-card-item:hover {
-  background: #f0f0f0;
-}
+      .slide-card-item:hover {
+        background: #f0f0f0;
+      }
 
-#slideSelectorBtn {
-  display: flex;
-  align-items: center;
-  background-color: #e2e4e7;
-  border: 1px solid #bab7b7;
-  border-radius: 12px;
-  padding: 6px 2px 5px 12px;  /* top:6px, right:4px, bottom:12px, left:12px */
-  cursor: pointer;
-}
+      #slideSelectorBtn {
+        display: flex;
+        align-items: center;
+        background-color: #e2e4e7;
+        border: 1px solid #bab7b7;
+        border-radius: 12px;
+        padding: 6px 2px 5px 12px;  /* top:6px, right:4px, bottom:12px, left:12px */
+        cursor: pointer;
+      }
 
+      #slideSelectorBtn .arrow-icon {
+        font-size: 30px;
+        vertical-align: middle;
+      }
 
+      /* ----- 設定ページ ----- */
+      
+      /* セクションタイトル（小さめグレー） */
+      .settings-card h3 {
+        font-size: 17px;
+        margin-bottom: 10px;
+        color: #24292f;
+      }
 
-#slideSelectorBtn .arrow-icon {
-  font-size: 30px;
-  vertical-align: middle;
-}
+      /* 各フォーム行 */
+      .settings-row {
+        margin-bottom: -6px;
+      }
 
+      /* ラベル */
+      .settings-row label {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 6px;
+        color: #24292f;
+      }
+
+      /* セレクトボックス */
+      .settings-row select {
+        width: 100%;
+        max-width: 300px;
+        padding: 6px 8px;
+        border: 1px solid #d0d7de;
+        border-radius: 6px;
+        background: #f6f8fa;
+        font-size: 14px;
+        color: #24292f;
+      }
+
+      /* 保存ボタン（GitHub風） */
+      #saveSettingBtn {
+        padding: 8px 16px;
+        background: #534ff1;
+        color: #fff;
+        border: 1px solid rgba(27,31,36,0.15);
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+
+      #saveSettingBtn:hover {
+        background: #238636;
+      }
+
+      /* 保存メッセージ */
+      #settingSavedMsg {
+        color: #1a7f37;
+        margin-top: 10px;
+        font-size: 14px;
+        display: none;
+      }
       
     </style>
   </head>
@@ -268,77 +323,66 @@
 
       <!-- 設定ページ -->
       <div id="setting-section" class="page is-hidden">
-        <h2>設定</h2>
-        <p>アプリの設定を変更できます。</p>
 
         <!-- 使用モデル選択 -->
-        <h3>モデル選択</h3>
-        <select id="modelSelect" style="padding:8px; width:250px;">
-          <option value="gpt-4o">GPT-4o</option>
-          <option value="gpt-4.1">GPT-4.1</option>
-          <option value="gpt-5.1">GPT-5.1</option>
-          <option value="custom">カスタムモデル</option>
-        </select>
-
+        <div class="settings-card">
+          <h3>モデル選択</h3>
+          <div class="settings-row">
+            <label for="modelSelect">モデル</label>
+            <select id="modelSelect">
+              <option value="gpt-4">GPT-4</option>
+              <option value="gpt-4o">GPT-4o</option>
+              <option value="gpt-5">GPT-5</option>
+            </select>
+          </div>
+      
         <br><br>
 
         <!-- 言語選択 -->
         <h3>言語</h3>
-        <select id="languageSelect" style="padding:8px; width:250px;">
-          <option value="ja">日本語</option>
-          <option value="en">English</option>
-          <option value="zh">中文</option>
-          <option value="ko">한국어</option>
-        </select>
+        <div class="settings-row">
+          <label for="langSelect">翻訳言語</label>
+          <select id="languageSelect">
+            <option value="ja">日本語</option>
+            <option value="en">English</option>
+            <option value="zh">中文</option>
+            <option value="ko">한국어</option>
+          </select>
+        </div>
 
         <br><br>
 
         <!-- ハードウェア選択 -->
         <h3>ハードウェア設定</h3>
-        <select id="hardwareSelect" style="padding:8px; width:250px;">
-          <option value="cpu">CPU</option>
-          <option value="gpu">GPU</option>
-          <option value="auto">AUTO（自動選択）</option>
+        <div class="settings-row">
+          <label for="hardwareSelect">処理モード</label>
+          <select id="hardwareSelect">
+            <option value="cpu">CPU</option>
+            <option value="gpu">GPU</option>
+            <option value="auto">AUTO（自動選択）</option>
         </select>
+      </div>
 
         <br><br>
 
-        <button id="saveSettingBtn" style="
-            padding:10px 18px;
-            background:#1f2b3a;
-            color:#fff;
-            border:none;
-            border-radius:6px;
-            cursor:pointer;
-        ">設定を保存</button>
+        <button id="saveSettingBtn">設定を保存</button>
+        <p id="settingSavedMsg">設定を保存しました！</p>
 
-        <p id="settingSavedMsg" style="color:green; margin-top:10px;    display:none;">
-        設定を保存しました！
-        </p>
       </div>
-
+    </div>
 
       <!-- 翻訳ページ -->
       <div id="translate-section" class="page is-hidden">
         <hr>
         <div id="translation-container">
 
-        
-
-        
-
           <button id="slideSelectorBtn">
             スライド（<span id="slideCountText">0 / 0</span>）
             <span class="material-icons arrow-icon">arrow_drop_down</span>
           </button>
-          
-          
-
+        
           <div id="slideSelectorList" class="slide-card is-hidden"></div>
-          
-
-          
-         
+                
           <p id="filePathLabel"></p>
           <p id="slideNumber"></p>
           <button id="test">test</button>
@@ -396,8 +440,8 @@
     <script src="renderer.js"></script>
     <script src="insert.js"></script>
     <script src="translate.js"></script>
-   
-   
+  
+  
 
     <script>
       // ページ切替
