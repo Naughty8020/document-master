@@ -147,10 +147,12 @@ btn.addEventListener("click", async () => {
 
         fileData = data;
         slides = data.slides;
+        document.getElementById("slideCountText").textContent = `1 / ${slides.length}`;
+
         selectedFilePath = data.path;
         slidesData = data;
 
-        console.log("aaa", data);
+        // console.log("aaa", data);
 
         if (data.error) {
             p.innerText = `Error: ${data.error}`;
@@ -158,9 +160,16 @@ btn.addEventListener("click", async () => {
         }
 
         p.innerText = `選択したファイル: ${data.filename}`;
+
+        // 🔥 これが超重要
+        // ---------------------------------------
         currentIndex = 0;
+        renderSlideSelector(data.slides);
 
         showSlide(0);
+        
+        // ---------------------------------------
+
     } catch (err) {
         console.error(err);
         p.innerText = "通信エラー";

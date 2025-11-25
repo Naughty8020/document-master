@@ -163,6 +163,49 @@
       }
 
       .material-icons { font-size: 22px; vertical-align: middle; }
+
+      .slide-card {
+  position: absolute;
+  top: 40px; /* ボタンの下あたりに出す */
+  left: 0;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 10px;
+  width: 180px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  z-index: 9999; /* 他のテキストに完全にかぶる */
+  opacity: 1;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.slide-card.is-hidden {
+  opacity: 0;
+  transform: translateY(-8px);
+  pointer-events: none;
+}
+
+.slide-card-item {
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.slide-card-item:hover {
+  background: #f0f0f0;
+}
+
+#slideSelectorBtn {
+  display: flex;
+  align-items: center;
+  
+}
+
+#slideSelectorBtn .arrow-icon {
+  font-size: 30px;
+  vertical-align: middle;
+}
+
       
     </style>
   </head>
@@ -226,7 +269,22 @@
       <div id="translate-section" class="page is-hidden">
         <hr>
         <div id="translation-container">
-          <h1>Hello from Electron renderer!</h1>
+
+        
+
+         
+
+          <button id="slideSelectorBtn">
+            スライド（<span id="slideCountText">0 / 0</span>）
+            <span class="material-icons arrow-icon">arrow_drop_down</span>
+          </button>
+          
+          
+
+          <div id="slideSelectorList" class="slide-card is-hidden"></div>
+          
+
+          
           <div>
             <button id="prevBtn">← 前</button>
             <button id="nextBtn">次 →</button>
@@ -238,11 +296,11 @@
           <ul id="listDisplay"></ul>
           <button id="replaceBtn">選択行を置換</button>
           <div id="slideContainer"></div>
-          <button id="savetest">セーブテスト</button>
+          <!-- <button id="savetest">セーブテスト</button> -->
           <div id="shapeInfo"></div>
           <button id="saveBtn">保存</button>
         </div>
-        <button id="savefileBtn">保存するよ</button>
+        <!-- <button id="savefileBtn">保存するよ</button> -->
       </div>
 
       <!-- 入力（Google翻訳風UI） -->
@@ -333,7 +391,7 @@
         }
       });
 
-      selectFileBtn.addEventListener("click", () => fileInput.click());
+      // selectFileBtn.addEventListener("click", () => fileInput.click());
 
       fileInput.addEventListener("change", () => {
         if (fileInput.files.length > 0) {
@@ -341,6 +399,62 @@
           console.log(fileInput.files[0]);
         }
       });
+
+
+
+      const selectorBtn = document.getElementById("slideSelectorBtn");
+const selectorList = document.getElementById("slideSelectorList");
+
+const slideCountText = document.getElementById("slideCountText");
+
+selectorBtn.addEventListener("click", () => {
+  const rect = selectorBtn.getBoundingClientRect();
+
+  selectorList.style.position = "absolute";
+  selectorList.style.top = rect.bottom + "px";
+  selectorList.style.left = rect.left + "px";
+
+  selectorList.classList.toggle("is-hidden");
+});
+
+
+function renderSlideSelector(slides) {
+    console.log("renderSlideSelector arg:", slides);
+
+    if (!Array.isArray(slides)) {
+        console.error("slides が配列じゃない:", slides);
+        return;
+    }
+
+    selectorList.innerHTML = "";  // 中身リセット
+    
+
+    slides.forEach((slide, index) => {
+        const item = document.createElement("div");
+        item.className = "slide-card-item";
+        item.textContent = `スライド ${index + 1}`;
+
+        item.addEventListener("click", () => {
+            showSlide(index);   // ← これだけでOK（中でスライド番号更新済み）
+            selectorList.classList.add("is-hidden");
+        });
+
+        selectorList.appendChild(item);
+    });
+
+    console.log("✔ スライドカード生成 完了");
+}
+// #slideSelectorList を取得済み
+const selectorListtest = document.getElementById("slideSelectorList");
+
+// 新しい要素を作る
+const item = document.createElement("div");
+item.className = "slide-card-item"; // CSSを効かせるならクラスも追加
+item.textContent = "aaa";
+
+// セレクターリストに追加
+selectorListtest.appendChild(item);
+
     </script>
 
   </body>
