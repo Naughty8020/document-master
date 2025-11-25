@@ -269,8 +269,54 @@
       <!-- 設定ページ -->
       <div id="setting-section" class="page is-hidden">
         <h2>設定</h2>
-        <p>ここにアプリ設定が入ります。</p>
+        <p>アプリの設定を変更できます。</p>
+
+        <!-- 使用モデル選択 -->
+        <h3>モデル選択</h3>
+        <select id="modelSelect" style="padding:8px; width:250px;">
+          <option value="gpt-4o">GPT-4o</option>
+          <option value="gpt-4.1">GPT-4.1</option>
+          <option value="gpt-5.1">GPT-5.1</option>
+          <option value="custom">カスタムモデル</option>
+        </select>
+
+        <br><br>
+
+        <!-- 言語選択 -->
+        <h3>言語</h3>
+        <select id="languageSelect" style="padding:8px; width:250px;">
+          <option value="ja">日本語</option>
+          <option value="en">English</option>
+          <option value="zh">中文</option>
+          <option value="ko">한국어</option>
+        </select>
+
+        <br><br>
+
+        <!-- ハードウェア選択 -->
+        <h3>ハードウェア設定</h3>
+        <select id="hardwareSelect" style="padding:8px; width:250px;">
+          <option value="cpu">CPU</option>
+          <option value="gpu">GPU</option>
+          <option value="auto">AUTO（自動選択）</option>
+        </select>
+
+        <br><br>
+
+        <button id="saveSettingBtn" style="
+            padding:10px 18px;
+            background:#1f2b3a;
+            color:#fff;
+            border:none;
+            border-radius:6px;
+            cursor:pointer;
+        ">設定を保存</button>
+
+        <p id="settingSavedMsg" style="color:green; margin-top:10px;    display:none;">
+        設定を保存しました！
+        </p>
       </div>
+
 
       <!-- 翻訳ページ -->
       <div id="translate-section" class="page is-hidden">
@@ -279,7 +325,7 @@
 
         
 
-         
+        
 
           <button id="slideSelectorBtn">
             スライド（<span id="slideCountText">0 / 0</span>）
@@ -462,6 +508,23 @@ item.textContent = "aaa";
 // セレクターリストに追加
 selectorListtest.appendChild(item);
 
+// 設定保存
+document.getElementById("saveSettingBtn").addEventListener("click", () => {
+  const model = document.getElementById("modelSelect").value;
+  const lang = document.getElementById("languageSelect").value;
+  const hardware = document.getElementById("hardwareSelect").value;
+
+  // localStorage に保存（Electron でも使える）
+  const settings = { model, lang, hardware };
+  localStorage.setItem("appSettings", JSON.stringify(settings));
+
+  document.getElementById("settingSavedMsg").style.display = "block";
+  setTimeout(() => {
+    document.getElementById("settingSavedMsg").style.display = "none";
+  }, 1500);
+
+  console.log("設定を保存:", settings);
+});
     </script>
 
   </body>
