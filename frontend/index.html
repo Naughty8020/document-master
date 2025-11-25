@@ -250,6 +250,7 @@
         border-radius: 12px;
         padding: 6px 2px 5px 12px;  /* top:6px, right:4px, bottom:12px, left:12px */
         cursor: pointer;
+        margin-top: 15px;
       }
 
       #slideSelectorBtn .arrow-icon {
@@ -309,6 +310,23 @@
         background: #3a76ff;
       }
 
+
+      #translateBtn {
+  padding: 8px 16px;
+  background: #195ff2;
+  color: #fff;
+  border: 1px solid rgba(27,31,36,0.15);
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+#translateBtn:hover {
+  background: #3a76ff;
+}
+
+
       /* 保存メッセージ */
       #settingSavedMsg {
         color: #195ff2;
@@ -316,6 +334,32 @@
         font-size: 14px;
         display: none;
       }
+      .custom-textarea {
+  width: 100%;
+  max-width: 100%;
+  height: 320px;
+  padding: 10px;
+  font-size: 16px;
+  box-sizing: border-box;
+  resize: vertical;
+  border-radius: 6px;
+  background-color: #f7f7fa;
+
+  border: 1px solid #656363;   /* ← 通常時の黒枠を復活 */
+  outline: none;
+}
+
+.custom-textarea:focus {
+  border: 2px solid #195ff2; /* ← フォーカス時に青 */
+}
+
+
+.custom-textarea:focus {
+  border: 2px solid #195ff2;
+}
+
+
+
       
     </style>
   </head>
@@ -427,7 +471,7 @@
 
       <!-- 翻訳ページ -->
       <div id="translate-section" class="page is-hidden">
-        <hr>
+      
         <div id="translation-container">
 
           <button id="slideSelectorBtn">
@@ -439,8 +483,16 @@
                 
           <p id="filePathLabel"></p>
           <p id="slideNumber"></p>
-          <button id="test">test</button>
-          <button id="translateBtn">翻訳</button>
+          <!-- <button id="test">test</button> -->
+
+          <textarea class="custom-textarea"></textarea>
+
+        
+
+          <div style="text-align: right;">
+            <button id="translateBtn">翻訳</button>
+          </div>
+          
           <ul id="listDisplay"></ul>
           <button id="replaceBtn">選択行を置換</button>
           <div id="slideContainer"></div>

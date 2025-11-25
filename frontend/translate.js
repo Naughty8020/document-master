@@ -48,7 +48,7 @@ const selectorListtest = document.getElementById("slideSelectorList");
 // 新しい要素を作る
 const item = document.createElement("div");
 item.className = "slide-card-item"; // CSSを効かせるならクラスも追加
-item.textContent = "aaa";
+item.textContent = "未選択";
 
 // セレクターリストに追加
 selectorListtest.appendChild(item);
