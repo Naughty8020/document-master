@@ -377,6 +377,7 @@
 
   border: 1px solid #656363;
   outline: none;
+  display:none;
 
 }
 
@@ -506,23 +507,26 @@
           <!-- <button id="test">test</button> -->
 
           <div style="display: flex; justify-content: flex-end; align-items: center; gap: 10px;">
-  <button style="color: red; border: none; padding: 8px 16px; background: transparent; cursor: pointer;"
-          onmouseover="this.style.color='darkred'" 
-          onmouseout="this.style.color='red'">
-    before
-  </button>
-  <p style="margin: 0;">/</p>
-  <div style="color: blue; padding: 8px 16px; cursor: pointer;"
-       onmouseover="this.style.color='darkblue'" 
-       onmouseout="this.style.color='blue'">
-    after
-  </div>
-</div>
+            <button id="beforeBtn" style="color: red; border: none; padding: 8px 16px; background: transparent; cursor: pointer;"
+                    onmouseover="this.style.color='darkred'" 
+                    onmouseout="this.style.color='red'">
+              before
+            </button>
+            <p style="margin: 0;">/</p>
+            <button id="afterBtn" style="color: blue; border: none; padding: 8px 16px; background: transparent; cursor: pointer;"
+                    onmouseover="this.style.color='darkblue'" 
+                    onmouseout="this.style.color='blue'">
+              after
+            </button>
+          </div>
+          
+         
+          
 
           
 
-          <textarea class="custom-textarea"></textarea>
-          <textarea class="custom-textarea-after"></textarea>
+          <textarea id="before" class="custom-textarea"></textarea>
+          <textarea id="after" class="custom-textarea-after"></textarea>
           
 
         
@@ -660,6 +664,25 @@
         });
       }
     </script>
+
+
+
+<script>
+  const beforeBtn = document.getElementById('beforeBtn');
+  const afterBtn = document.getElementById('afterBtn');
+  const beforeArea = document.getElementById('before');
+  const afterArea = document.getElementById('after');
+
+  beforeBtn.addEventListener('click', () => {
+    beforeArea.style.display = 'block';
+    afterArea.style.display = 'none';
+  });
+
+  afterBtn.addEventListener('click', () => {
+    beforeArea.style.display = 'none';
+    afterArea.style.display = 'block';
+  });
+</script>
 
   </body>
 </html>
