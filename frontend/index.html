@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>Hello Electron</title>
+    <title>document master</title>
     <link rel="stylesheet" type="text/css" href="./node_modules/swagger-ui-dist/swagger-ui.css" >
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -112,6 +112,7 @@
         color: #212c4c
       }
       .header-title { 
+        margin-left: 1rem;
         font-size: 18px; 
         font-weight: bold; 
         font-family: "Mochiy Pop One", sans-serif;   
@@ -386,7 +387,7 @@
   <body>
     <!-- 固定ヘッダー -->
     <header id="topHeader">
-      <div class="header-title">入力</div>
+      <div class="header-title">ファイル選択</div>
       <div class="header-filename" id="currentFileName">選択中のファイル名なし</div>
       <button class="header-save-btn" id="headerSaveBtn">保存</button>
     </header>
@@ -504,6 +505,22 @@
           <p id="slideNumber"></p>
           <!-- <button id="test">test</button> -->
 
+          <div style="display: flex; justify-content: flex-end; align-items: center; gap: 10px;">
+  <button style="color: red; border: none; padding: 8px 16px; background: transparent; cursor: pointer;"
+          onmouseover="this.style.color='darkred'" 
+          onmouseout="this.style.color='red'">
+    before
+  </button>
+  <p style="margin: 0;">/</p>
+  <div style="color: blue; padding: 8px 16px; cursor: pointer;"
+       onmouseover="this.style.color='darkblue'" 
+       onmouseout="this.style.color='blue'">
+    after
+  </div>
+</div>
+
+          
+
           <textarea class="custom-textarea"></textarea>
           <textarea class="custom-textarea-after"></textarea>
           
@@ -584,7 +601,7 @@
         });
       });
       // 初期ページ
-      document.getElementById('textarea-section').classList.remove('is-hidden');
+      document.getElementById('file-section').classList.remove('is-hidden');
 
       // ファイル選択処理
       const dropArea = document.getElementById("dropArea");
@@ -625,6 +642,23 @@
       });
 
 
+
+      const headerTitle = document.querySelector('.header-title');
+      const menuItems = document.querySelectorAll('.menu-item');
+
+      const sectionTitles = {
+        'file-section': 'ファイル選択',
+        'translate-section': '翻訳',
+        'textarea-section': '入力',
+        'setting-section': '設定'
+      };
+
+      for (let i =0; i<menuItems.length; i++) {
+        menuItems[i].addEventListener('click', function() {
+          const target = this.getAttribute('data-target');
+          headerTitle.textContent = sectionTitles[target] || 'Document Master';
+        });
+      }
     </script>
 
   </body>
