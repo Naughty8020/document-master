@@ -32,6 +32,7 @@ function showSlide(index) {
     console.log("Shapes:", slide?.shapes);
 
     const shapeInfoDiv = document.getElementById("shapeInfo");
+    const textArea = document.querySelector(".custom-textarea"); // ← 最初に取得
 
     let html = slide.shapes
         .map((shape, i) => {
@@ -40,48 +41,34 @@ function showSlide(index) {
                     ? shape.paragraphs
                           .map(
                               (para, p) => `
-        <div id="t-value" style="margin-left: 10px; padding: 4px 0;">
-            <label style="display:flex; align-items:center; gap:6px;">
-                <input 
-                    type="checkbox" 
-                    class="para-checkbox" 
-                    data-shape-index="${i}"
-                    data-paragraph-index="${p}">
-                <span><strong>Paragraph ${p + 1}</strong></span>
-            </label>
-            <div style="margin-left:22px; margin-top:3px;">
+        <div class="para-row" style="display:flex; align-items:flex-start; gap:6px; padding:4px 0;">
+            <input 
+                type="checkbox" 
+                class="para-checkbox" 
+                data-shape-index="${i}"
+                data-paragraph-index="${p}"
+                style="margin-top:4px;"
+            >
+            <div class="para-text" style="line-height:1.4;">
                 ${para.text || ""}
             </div>
         </div>`
                           )
                           .join("")
-                    : `<div>(no paragraphs)</div>`;
+                    : `<div style="padding:4px 0; color:#777;">(no paragraphs)</div>`;
 
             return `
-<div style="margin-bottom: 10px; padding: 8px; border: 1px solid #ccc; border-radius: 6px;">
-    <strong>Shape ${i + 1}</strong><br>
-
-    <button
-      class="select-all-btn"
-      data-shape-index="${i}"
-      style="margin: 6px 0; padding: 4px 12px; border-radius: 4px; cursor: pointer;">
-      全選択
-    </button>
-
-    <div style="display: flex; gap: 16px; margin-top: 6px;">
-      <div class="scroll-box" style="flex: 1; margin-top: 4px;">
-        ${paragraphsHtml}
-      </div>
-
-      <div style="min-width: 160px; font-size: 14px; line-height: 1.4;">
-        <div>Left: ${shape.left}</div>
-        <div>Top: ${shape.top}</div>
-        <div>Width: ${shape.width}</div>
-        <div>Height: ${shape.height}</div>
-      </div>
+<div class="shape-box" 
+     style="margin-bottom: 8px; padding: 6px; border: 1px solid #ccc; border-radius: 4px; background:#fafafa;">
+    
+    <div class="shape-title" style="font-weight:bold; margin-bottom:4px;">
+        Shape ${i + 1}
     </div>
 
-    <hr style="margin: 8px 0;">
+    <div class="scroll-box" style="max-height:140px; overflow-y:auto; padding-right:4px;">
+        ${paragraphsHtml}
+    </div>
+
 </div>`;
         })
         .join("");
@@ -89,10 +76,48 @@ function showSlide(index) {
     shapeInfoDiv.innerHTML = html;
     slideNumber.innerText = `Slide ${index + 1} / ${slides.length}`;
 
-    // スライド内の全テキストを textarea に入れる
-    const allTexts = slide.shapes.map((s) => s.text ?? s).join("\n");
-    textArea.value = allTexts;
+    // shapeInfoDiv の文字だけを textarea に入れる（空行削除＋shape間に1行空白）
+    if (textArea) {
+        const lines = shapeInfoDiv.innerText
+            .split("\n")
+            .map(line => line.trim())
+            .filter(line => line !== "");
+
+        // shapeごとの間に空行を入れる
+        const shapes = [];
+        let currentShape = [];
+        lines.forEach(line => {
+            if (line.startsWith("Shape")) {
+                if (currentShape.length > 0) {
+                    shapes.push(currentShape.join("\n"));
+                }
+                currentShape = [line];
+            } else {
+                currentShape.push(line);
+            }
+        });
+        if (currentShape.length > 0) shapes.push(currentShape.join("\n"));
+
+        textArea.value = shapes.join("\n\n"); // shape間に空行1行
+    }
 }
+
+
+{/* <div style="min-width: 160px; font-size: 14px; line-height: 1.4;">
+<div>Left: ${shape.left}</div>
+<div>Top: ${shape.top}</div>
+<div>Width: ${shape.width}</div>
+<div>Height: ${shape.height}</div>
+</div> */}
+
+{/* <span><strong>Paragraph ${p + 1}</strong></span> */}
+
+  // <button
+    //   class="select-all-btn"
+    //   data-shape-index="${i}"
+    //   style="margin: 6px 0; padding: 4px 12px; border-radius: 4px; cursor: pointer;">
+    //   全選択
+    // </button>
 
 // ---------------------
 // --- リスト選択 ---
@@ -186,8 +211,7 @@ btn.addEventListener("click", async () => {
 // ★ 翻訳
 // ---------------------
 translateBtn.addEventListener("click", async () => {
-    const tNodes = document.querySelectorAll("#t-value > div");
-    if (!tNodes.length) return alert("翻訳対象がありません");
+    if (!slides || !slides.length) return alert("翻訳対象がありません");
 
     translateBtn.disabled = true;
 
@@ -195,7 +219,7 @@ translateBtn.addEventListener("click", async () => {
         const res = await fetch("http://127.0.0.1:8000/translate_text", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(fileData),
+            body: JSON.stringify({ slides }),
         });
 
         const data = await res.json();
@@ -206,6 +230,7 @@ translateBtn.addEventListener("click", async () => {
 
         const tSlides = data.translated_text.slides;
 
+        // 翻訳結果を表示
         tSlides.forEach((slide, i) => {
             const slideDiv = document.createElement("div");
             slideDiv.innerHTML = `<h3>Slide ${i + 1}</h3>`;
@@ -228,7 +253,7 @@ translateBtn.addEventListener("click", async () => {
             translatedTextDiv.appendChild(slideDiv);
         });
 
-        // ★ ここで翻訳結果を slides に反映
+        // 翻訳結果を slides に反映
         tSlides.forEach((slide, i) => {
             slide.shapes.forEach((shape, j) => {
                 shape.paragraphs.forEach((p, k) => {
@@ -236,6 +261,25 @@ translateBtn.addEventListener("click", async () => {
                 });
             });
         });
+
+        // 翻訳結果を「after」の textarea にセット
+        const afterTextArea = document.querySelector(".custom-textarea-after");
+        if (afterTextArea) {
+            const allText = tSlides.map((slide) => {
+                return slide.shapes
+                    .map((shape) => {
+                        return shape.paragraphs
+                            .map(p => p.text.trim())
+                            .filter(Boolean)
+                            .join("\n");
+                    })
+                    .join("\n\n"); // shape ごとの間に空行
+            }).join("\n\n"); // slide ごとの間にも空行
+            afterTextArea.value = allText;
+        }
+
+        // 必要であれば現在のスライドも更新
+        
 
     } catch (err) {
         console.error(err);
@@ -246,16 +290,17 @@ translateBtn.addEventListener("click", async () => {
 
 
 
+
 // ---------------------
 // ★ 前へ / 次へ
 // ---------------------
-prevBtn.addEventListener("click", () => {
-    if (currentIndex > 0) showSlide(currentIndex - 1);
-});
+// prevBtn.addEventListener("click", () => {
+//     if (currentIndex > 0) showSlide(currentIndex - 1);
+// });
 
-nextBtn.addEventListener("click", () => {
-    if (currentIndex < slides.length - 1) showSlide(currentIndex + 1);
-});
+// nextBtn.addEventListener("click", () => {
+//     if (currentIndex < slides.length - 1) showSlide(currentIndex + 1);
+// });
 
 // ---------------------
 // ★ 保存ロジック
