@@ -146,16 +146,107 @@
         display: flex;
         flex-direction: column;
       }
+
+      .translate-column h3 {
+        margin-bottom: 6px;
+      }
+
       .translate-textarea {
         flex: 1;
         width: 100%;
         padding: 9.2px;
-        font-size: 16px;
-        border: 1px solid #ccc;
+        font-size: 15px;
+        border: 1px solid #d0d7de;
         border-radius: 10px;
         resize: none;
         background: #fff;
       }
+
+      /* ← 追加：ボタンを右寄せするコンテナ */
+      #insert-btn-container {
+        text-align: right;
+        margin-top: 16px;
+      }
+
+      #insert-btn {
+        padding: 8px 16px;
+        background: #195ff2;
+        color: #fff;
+        border: 1px solid rgba(27,31,36,0.15);
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+
+      #insert-btn:hover {
+        background: #3a76ff;
+      }
+
+      .info-alert {
+        display: flex;
+        align-items: flex-start;
+        border: 1px solid #2196f3;    /* 情報色のアウトライン */
+        background-color: #e3f2fd;     /* 薄い青背景 */
+        color: #0d47a1;               /* 濃い青文字 */
+        padding: 12px 16px;
+        border-radius: 6px;
+        font-size: 14px;
+        margin-bottom: 15px;
+      }
+
+      /* 左のアイコン */
+      .icon-alert {
+        font-size: 20px;
+        margin-right: 10px;
+        line-height: 1.2;
+      }
+
+      /* テキスト部分 */
+      .text-alert {
+        line-height: 1.5;
+      }
+
+      .alert-danger-text {
+        color: #e9665d;  /* Google風の強調レッド */
+        font-weight: 600;
+      }
+
+      /* PPTX モダン設定フォーム */
+      .pptx-setting {
+        display: grid;
+        grid-template-columns: 1fr 1fr;   /* 2列レイアウト */
+        gap: 14px 20px;
+        margin: 20px 0;
+      }
+
+      .pptx-setting label {
+        font-size: 14px;
+        font-weight: 600;
+        color: #24292f;
+      }
+
+      .pptx-setting input {
+        width: 100%;
+        padding: 8px 10px;
+        font-size: 14px;
+        border: 1px solid #d0d7de;
+        border-radius: 6px;
+        background: #fff;
+        transition: 0.15s ease;
+      }
+
+      /* フォーカス時（モダン感UP） */
+      .pptx-setting input:focus {
+        border-color: #195ff2;
+        box-shadow: 0 0 0 3px rgba(25, 95, 242, 0.2);
+        outline: none;
+      }
+
+      /* ホバー効果（軽い印象） */
+      .pptx-setting input:hover {
+        border-color: #a6b5c3;
+      }
+
 
        /* ----- ファイル選択ページ ----- */
 
@@ -282,7 +373,6 @@
         color: #24292f;
       }
       
-
       /* セレクトボックス */
       .settings-row select {
         width: 100%;
@@ -295,7 +385,6 @@
         color: #24292f;
       }
       
-
       /* 保存ボタン（GitHub風） */
       #saveSettingBtn {
         padding: 8px 16px;
@@ -311,22 +400,20 @@
         background: #3a76ff;
       }
 
-
       #translateBtn {
-  padding: 8px 16px;
-  background: #195ff2;
-  color: #fff;
-  border: 1px solid rgba(27,31,36,0.15);
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background 0.2s;
-}
+        padding: 8px 16px;
+        background: #195ff2;
+        color: #fff;
+        border: 1px solid rgba(27,31,36,0.15);
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background 0.2s;
+      }
 
-#translateBtn:hover {
-  background: #3a76ff;
-}
-
+      #translateBtn:hover {
+        background: #3a76ff;
+      }
 
       /* 保存メッセージ */
       #settingSavedMsg {
@@ -335,52 +422,47 @@
         font-size: 14px;
         display: none;
       }
+
       .custom-textarea {
-  width: 100%;
-  max-width: 100%;
-  height: calc(100vh - 200px); /* ← 画面の高さから必要分を差し引く */
-  min-height: 150px;          /* 小さすぎ防止 */
-  padding: 10px;
-  font-size: 16px;
-  box-sizing: border-box;
-  resize: vertical;
-  border-radius: 6px;
-  background-color: #f7f7fa;
+        width: 100%;
+        max-width: 100%;
+        height: calc(100vh - 200px); /* ← 画面の高さから必要分を差し引く */
+        min-height: 150px;          /* 小さすぎ防止 */
+        padding: 10px;
+        font-size: 16px;
+        box-sizing: border-box;
+        resize: vertical;
+        border-radius: 6px;
+        background-color: #f7f7fa;
 
-  border: 1px solid #656363;
-  outline: none;
-}
+        border: 1px solid #656363;
+        outline: none;
+      }
 
+      .custom-textarea:focus {
+        border: 2px solid #195ff2; /* ← フォーカス時に青 */
+      }
 
+      .custom-textarea-after:focus {
+        border: 2px solid #195ff2;
+      }
 
-.custom-textarea:focus {
-  border: 2px solid #195ff2; /* ← フォーカス時に青 */
-}
-
-
-.custom-textarea-after:focus {
-  border: 2px solid #195ff2;
-}
-
-
-.custom-textarea-after {
-  width: 100%;
-  max-width: 100%;
-  height: calc(100vh - 200px); /* ← 画面の高さから必要分を差し引く */
-  min-height: 150px;          /* 小さすぎ防止 */
-  padding: 10px;
-  font-size: 16px;
-  box-sizing: border-box;
-  resize: vertical;
-  border-radius: 6px;
-  background-color: #f7f7fa;
-
-  border: 1px solid #656363;
-  outline: none;
-  display:none;
-
-}
-
+      .custom-textarea-after {
+        width: 100%;
+        max-width: 100%;
+        height: calc(100vh - 200px); /* ← 画面の高さから必要分を差し引く */
+        min-height: 150px;          /* 小さすぎ防止 */
+        padding: 10px;
+        font-size: 16px;
+        box-sizing: border-box;
+        resize: vertical;
+        border-radius: 6px;
+        background-color: #f7f7fa;
+        border: 1px solid #656363;
+        outline: none;
+        display:none;
+      }
+    
       
     </style>
   </head>
@@ -519,17 +601,9 @@
               after
             </button>
           </div>
-          
-         
-          
-
-          
-
+              
           <textarea id="before" class="custom-textarea"></textarea>
-          <textarea id="after" class="custom-textarea-after"></textarea>
-          
-
-        
+          <textarea id="after" class="custom-textarea-after"></textarea>       
 
           <div style="text-align: right;">
             <button id="translateBtn">翻訳</button>
@@ -546,9 +620,10 @@
         <div id="translated-text"></div>
         <!-- <button id="savefileBtn">保存するよ</button> -->
       </div>
-
+    
       <!-- 入力（Google翻訳風UI） -->
       <div id="textarea-section" class="page is-hidden">
+
         <div class="translate-container">
           <div class="translate-column">
             <h3>英語入力</h3>
@@ -572,18 +647,22 @@
           <input type="number" id="height-input" value="1.5" step="0.1">
         </div>
 
-        <p>
+        <div class="info-alert">
+        <span class="icon-alert">ℹ️</span>
+        <span class="text-alert">
           デフォルトサイズ（PowerPoint標準）<br>
           通常の標準(4:3) → Left:10インチ × Top:7.5インチ<br>
-          ワイドスクリーン(16:9) → Left:13.333インチ × Top:7.5インチ
-        </p>
-        *この基準を超えるとスライドからはみ出す可能性があります。<br>
+          ワイドスクリーン(16:9) → Left:13.333インチ × Top:7.5インチ<br>
+          Width（textboxの横幅）<br>
+          Height（textboxの縦幅）<br>
+          1インチ=2.54センチ<br>
+        <span class="alert-danger-text">※この基準を超えるとスライドからはみ出す可能性があります。</span>
+        </span>
+        </div>
 
-        <p>Width（textboxの横幅）<br>
-        Height（textboxの縦幅）<br>
-        1インチ=2.54センチ</p>
-
+      <div id="insert-btn-container">
         <button id="insert-btn">挿入する</button>
+      </div>
       </div>
 
     <!-- JS -->
