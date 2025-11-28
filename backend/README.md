@@ -1,6 +1,7 @@
+cd .\backend\
+
 # プロジェクトディレクトリで
 python -m venv .venv_new
-
 
 # PowerShellでactive
 .venv_new\Scripts\Activate.ps1
@@ -8,12 +9,14 @@ python -m venv .venv_new
 # 仮想環境がactiveの状態でrequirements.txtからダウウンロード
 pip install -r requirements.txt
 
+python.exe -m pip install --upgrade pip
+
 # openvinoをダウウンロード
 pip install optimum[openvino]
 pip install --upgrade optimum[openvino] optimum-intel
 
 
-# モデルダウウンロード・量子化
+# モデルダウンロード・量子化
 optimum-cli export openvino --model facebook/mbart-large-50-many-to-many-mmt --task translation --weight-format int8 openvino_model
 
 

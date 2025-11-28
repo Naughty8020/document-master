@@ -6,7 +6,7 @@ import re
 class TranslatorModel:
     def __init__(self, model_dir="openvino_model", src_lang="ja_XX", tgt_lang="en_XX"):
         self.tokenizer = AutoTokenizer.from_pretrained(model_dir)
-        self.model = OVModelForSeq2SeqLM.from_pretrained(model_dir, device="GPU")
+        self.model = OVModelForSeq2SeqLM.from_pretrained(model_dir, device="CPU")
 
         self.src_lang = src_lang
         self.tgt_lang = tgt_lang

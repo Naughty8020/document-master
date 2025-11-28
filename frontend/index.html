@@ -479,24 +479,24 @@
     <aside id="sidebar">
       <h2 class="sidebar-title">Document Master</h2>
       
-      <div class="menu-div">
+      <div class="menu-div" data-target="file-section">
         <span class="material-icons">file_open</span>
-        <button class="menu-item" data-target="file-section">ファイル選択</button>
+        <span class="menu-item">ファイル選択</span>
       </div>
 
-      <div class="menu-div">
+      <div class="menu-div" data-target="translate-section">
         <span class="material-icons">translate</span>
-        <button class="menu-item" data-target="translate-section">翻訳</button>
+        <span class="menu-item">翻訳</span>
       </div>
 
-      <div class="menu-div">
+      <div class="menu-div" data-target="textarea-section">
         <span class="material-icons">edit_note</span>
-        <button class="menu-item" data-target="textarea-section">入力</button>
+        <span class="menu-item">入力</span>
       </div>
 
-      <div class="menu-div">
+      <div class="menu-div" data-target="setting-section">
         <span class="material-icons">settings</span>
-        <button class="menu-item" data-target="setting-section">設定</button>
+        <span class="menu-item">設定</span>
         
       </div>
     
@@ -665,24 +665,86 @@
       </div>
       </div>
 
+      <!-- ▼ ファイル未選択モーダル -->
+<div id="file-alert-modal" class="modal is-hidden">
+  <div class="modal-content">
+    <p>まずファイルを選択してください</p>
+    <button id="modal-close-btn">OK</button>
+  </div>
+</div>
+
+<style>
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .modal-content {
+    background: white;
+    padding: 20px 30px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 16px;
+  }
+
+  .is-hidden { display: none !important; }
+</style>
+
+
+
     <!-- JS -->
     <script src="renderer.js"></script>
     <script src="insert.js"></script>
     <script src="translate.js"></script>
   
-  
+    <script>  
+    // ▼ ファイル選択状態のフラグ
+    let fileSelected = false;
+
+    // ▼ ファイルが選ばれたら true にする
+    document.getElementById("fileInput").addEventListener("change", () => {
+      fileSelected = true;
+    });
+
+    // ▼ モーダル処理
+    const modal = document.getElementById("file-alert-modal");
+    const modalCloseBtn = document.getElementById("modal-close-btn");
+
+    modalCloseBtn.addEventListener("click", () => {
+      modal.classList.add("is-hidden");
+    });
+
+    // ▼ モーダル表示関数
+    function showFileSelectModal() {
+      modal.classList.remove("is-hidden");
+    }
+
+    </script>
 
     <script>
-      // ページ切替
+      // ページ切替（menu-div 全体をクリック可能にする）
       const pages = document.querySelectorAll('.page');
-      document.querySelectorAll('.menu-item').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const target = btn.dataset.target;
-          pages.forEach(p => p.classList.add('is-hidden'));
-          const page = document.getElementById(target);
-          if (page) page.classList.remove('is-hidden');
-        });
+
+      document.querySelectorAll('.menu-div').forEach(div => {
+        div.addEventListener('click', () => {
+          const target = div.dataset.target;
+
+      // ▼ ファイル未選択で file-select と settings 以外ならモーダル
+      if (!fileSelected && target !== "file-section" && target !== "setting-section") {
+        showFileSelectModal();
+        return; // ページ切替 STOP
+      }
+
+      // ▼ 通常のページ切替
+      pages.forEach(p => p.classList.add('is-hidden'));
+      const page = document.getElementById(target);
+      if (page) page.classList.remove('is-hidden');
       });
+    });
+
       // 初期ページ
       document.getElementById('file-section').classList.remove('is-hidden');
 
@@ -746,22 +808,22 @@
 
 
 
-<script>
-  const beforeBtn = document.getElementById('beforeBtn');
-  const afterBtn = document.getElementById('afterBtn');
-  const beforeArea = document.getElementById('before');
-  const afterArea = document.getElementById('after');
+    <script>
+      const beforeBtn = document.getElementById('beforeBtn');
+      const afterBtn = document.getElementById('afterBtn');
+      const beforeArea = document.getElementById('before');
+      const afterArea = document.getElementById('after');
 
-  beforeBtn.addEventListener('click', () => {
-    beforeArea.style.display = 'block';
-    afterArea.style.display = 'none';
-  });
+      beforeBtn.addEventListener('click', () => {
+        beforeArea.style.display = 'block';
+        afterArea.style.display = 'none';
+      });
 
-  afterBtn.addEventListener('click', () => {
-    beforeArea.style.display = 'none';
-    afterArea.style.display = 'block';
-  });
-</script>
+      afterBtn.addEventListener('click', () => {
+        beforeArea.style.display = 'none';
+        afterArea.style.display = 'block';
+      });
+    </script>
 
   </body>
 </html>
