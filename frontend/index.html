@@ -5,12 +5,10 @@
     <title>document master</title>
     <link rel="stylesheet" type="text/css" href="./node_modules/swagger-ui-dist/swagger-ui.css" >
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Shippori+Antique&display=swap%22 rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Shippori+Antique&display=swap" rel="stylesheet">
+
     <style>
       /* ----- 共通クラス ----- */
       .hidden { display: none; }
@@ -42,6 +40,7 @@
         flex-direction: column;
         z-index: 9999;
       }
+
       .sidebar-title {
         font-size: 20px;
         margin-bottom: 18px;
@@ -463,6 +462,101 @@
         display:none;
       }
     
+     /* ----- モーダル全体（背景） ----- */
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(3px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+      z-index: 9999; /* ★ サイドメニューより上に表示 */
+    }
+
+    /* 表示状態 */
+    .modal.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* ----- モーダル本体 ----- */
+    .modal-content {
+      background: #ffffff;
+      padding: 22px 26px;    
+      border-radius: 12px;
+      text-align: center;
+      font-size: 15px;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.18);
+      transform: scale(0.92);
+      transition: transform 0.25s ease;
+      max-width: 300px;
+      width: 90%;
+    }
+
+    /* 表示時アニメーション */
+    .modal.show .modal-content {
+      transform: scale(1);
+    }
+
+    /* ---- テキスト部分 ---- */
+    .modal-content p {
+      margin: 4px 0 0;
+      line-height: 1.5;
+      font-size: 14.5px;
+      color: #222;
+    }
+
+    /* ⚠️ 警告アイコン */
+    .modal-content::before {
+      content: "⚠️";
+      font-size: 28px;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    /* ------ OKボタン ------ */
+    #modal-close-btn {
+      margin-top: 16px;
+      padding: 8px 22px;
+      background: #195ff2;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    #modal-close-btn:hover {
+      background: #3a76ff;
+    }
+
+    /* 右上の × ボタン */
+    .modal-close-x {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      background: transparent;
+      border: none;
+      font-size: 28px;
+      color: #666;
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+      transition: 0.2s;
+    }
+
+    .modal-close-x:hover {
+      color: #000;
+      transform: scale(1.12);
+    }
+
+    /* 非表示 */
+    .is-hidden { display: none !important; }
       
     </style>
   </head>
@@ -627,11 +721,11 @@
         <div class="translate-container">
           <div class="translate-column">
             <h3>英語入力</h3>
-            <textarea id="inputText" class="translate-textarea" placeholder="ここに英語を入力"></textarea>
+            <textarea id="inputText" class="translate-textarea" placeholder="Enter text"></textarea>
           </div>
           <div class="translate-column">
             <h3>翻訳結果（日本語）</h3>
-            <textarea id="outputText" class="translate-textarea" placeholder="ここに日本語が表示"></textarea>
+            <textarea id="outputText" class="translate-textarea" placeholder="テキストが表示"></textarea>
           </div>
         </div>
 
@@ -666,33 +760,19 @@
       </div>
 
       <!-- ▼ ファイル未選択モーダル -->
-<div id="file-alert-modal" class="modal is-hidden">
-  <div class="modal-content">
-    <p>まずファイルを選択してください</p>
+    <div id="file-alert-modal" class="modal is-hidden">
+      <div class="modal-content">
+
+    <!-- 右上 × ボタン -->
+    <button class="modal-close-x" id="modal-close-x">×</button>
+
+    <p id="file-alert-title">
+      ファイルが選択されていません。<br>
+      ページを移動する前に、ファイルを選択してください。
+    </p>
     <button id="modal-close-btn">OK</button>
   </div>
 </div>
-
-<style>
-  .modal {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.4);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  .modal-content {
-    background: white;
-    padding: 20px 30px;
-    border-radius: 8px;
-    text-align: center;
-    font-size: 16px;
-  }
-
-  .is-hidden { display: none !important; }
-</style>
-
 
 
     <!-- JS -->
@@ -700,51 +780,95 @@
     <script src="insert.js"></script>
     <script src="translate.js"></script>
   
-    <script>  
-    // ▼ ファイル選択状態のフラグ
+    <script>
+    /*===========================
+      状態管理
+    ===========================*/
     let fileSelected = false;
 
-    // ▼ ファイルが選ばれたら true にする
     document.getElementById("fileInput").addEventListener("change", () => {
       fileSelected = true;
     });
 
-    // ▼ モーダル処理
+    /*===========================
+      モーダル制御
+    ===========================*/
     const modal = document.getElementById("file-alert-modal");
     const modalCloseBtn = document.getElementById("modal-close-btn");
+    const modalCloseX = document.getElementById("modal-close-x");
 
-    modalCloseBtn.addEventListener("click", () => {
-      modal.classList.add("is-hidden");
-    });
-
-    // ▼ モーダル表示関数
     function showFileSelectModal() {
       modal.classList.remove("is-hidden");
+      setTimeout(() => modal.classList.add("show"), 10);
     }
 
-    </script>
+    function hideFileSelectModal() {
+      modal.classList.remove("show");
+      setTimeout(() => modal.classList.add("is-hidden"), 250);
+    }
 
-    <script>
-      // ページ切替（menu-div 全体をクリック可能にする）
-      const pages = document.querySelectorAll('.page');
+    /*===========================
+      ページ切替（共通）
+    ===========================*/
+    const pages = document.querySelectorAll(".page");
+    const headerTitle = document.querySelector(".header-title");
 
-      document.querySelectorAll('.menu-div').forEach(div => {
-        div.addEventListener('click', () => {
-          const target = div.dataset.target;
+    const sectionTitles = {
+      "file-section": "ファイル選択",
+      "translate-section": "翻訳",
+      "textarea-section": "入力",
+      "setting-section": "設定"
+    };
 
-      // ▼ ファイル未選択で file-select と settings 以外ならモーダル
-      if (!fileSelected && target !== "file-section" && target !== "setting-section") {
-        showFileSelectModal();
-        return; // ページ切替 STOP
-      }
+    function goToFileSelectPage() {
+      pages.forEach(p => p.classList.add("is-hidden"));
+      document.getElementById("file-section").classList.remove("is-hidden");
+      headerTitle.textContent = "ファイル選択";
+    }
 
-      // ▼ 通常のページ切替
-      pages.forEach(p => p.classList.add('is-hidden'));
-      const page = document.getElementById(target);
-      if (page) page.classList.remove('is-hidden');
+    /*===========================
+      OK / × ボタン
+    ===========================*/
+    modalCloseBtn.addEventListener("click", () => {
+      hideFileSelectModal();
+      goToFileSelectPage();
+    });
+
+    modalCloseX.addEventListener("click", () => {
+      hideFileSelectModal();
+      goToFileSelectPage();
+    });
+
+    /*===========================
+      メニュークリック（1か所に統一）
+    ===========================*/
+    document.querySelectorAll(".menu-div").forEach(div => {
+      div.addEventListener("click", () => {
+
+        const target = div.dataset.target;
+
+        // ファイル未選択ならモーダル表示
+        if (!fileSelected && 
+            target !== "file-section" && 
+            target !== "setting-section") {
+          showFileSelectModal();
+          return;
+        }
+
+        // ページ切替
+        pages.forEach(p => p.classList.add("is-hidden"));
+        document.getElementById(target).classList.remove("is-hidden");
+
+        // タイトル変更
+        headerTitle.textContent = sectionTitles[target] || "Document Master";
       });
     });
 
+
+  </script>
+
+  <script>
+    
       // 初期ページ
       document.getElementById('file-section').classList.remove('is-hidden');
 
@@ -786,26 +910,7 @@
         }
       });
 
-
-
-      const headerTitle = document.querySelector('.header-title');
-      const menuItems = document.querySelectorAll('.menu-item');
-
-      const sectionTitles = {
-        'file-section': 'ファイル選択',
-        'translate-section': '翻訳',
-        'textarea-section': '入力',
-        'setting-section': '設定'
-      };
-
-      for (let i =0; i<menuItems.length; i++) {
-        menuItems[i].addEventListener('click', function() {
-          const target = this.getAttribute('data-target');
-          headerTitle.textContent = sectionTitles[target] || 'Document Master';
-        });
-      }
     </script>
-
 
 
     <script>

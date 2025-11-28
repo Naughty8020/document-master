@@ -172,6 +172,7 @@ btn.addEventListener("click", async () => {
         const res = await fetch("http://127.0.0.1:8000/get_file");
         const data = await res.json();
 
+        fileSelected = true;
         fileData = data;
         slides = data.slides;
         document.getElementById("slideCountText").textContent = `1 / ${slides.length}`;
