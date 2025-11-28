@@ -213,10 +213,8 @@ class FileData(BaseModel):
     path: Optional[str] = None
     filename: Optional[str] = None
 
-#文字列で翻訳jsonに戻して送る
 @app.post("/translate_text")
 async def api_translate_text(file_data: FileData):
-
     # 段落ごとのテキストを抽出
     all_texts = []
     for slide in file_data.slides or []:
@@ -224,8 +222,8 @@ async def api_translate_text(file_data: FileData):
             for para in shape.paragraphs or []:
                 all_texts.append(para.text)
 
-    # 各テキストを翻訳（モデルがなければ元のまま返す）
-    translated_texts = [translate_text(t) for t in all_texts]
+    # 各テキストを翻訳（OpenVINO GPU 翻訳）
+    translated_texts = [ov_translate_text(t) for t in all_texts]
 
     # 元の構造に戻す
     idx = 0
@@ -235,11 +233,64 @@ async def api_translate_text(file_data: FileData):
                 para.text = translated_texts[idx]
                 idx += 1
 
-    
-    # print("翻訳完了:", file_data)
-
     return {"status": "ok", "translated_text": file_data}
 
+from fastapi import FastAPI
+from pydantic import BaseModel
+from typing import List, Optional
+import openvino as ov
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+import numpy as np
+
+# ---------------------------
+# FastAPI 用データモデル
+# ---------------------------
+class Paragraph(BaseModel):
+    text: str
+
+class Shape(BaseModel):
+    paragraphs: Optional[List[Paragraph]] = []
+
+class Slide(BaseModel):
+    shapes: Optional[List[Shape]] = []
+
+class FileData(BaseModel):
+    slides: Optional[List[Slide]] = []
+
+# ---------------------------
+# OpenVINO 翻訳モデル初期化（アプリ起動時に一度だけ）
+# ---------------------------
+MODEL_NAME = "Helsinki-NLP/opus-mt-ja-en"
+
+tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+pt_model = AutoModelForSeq2SeqLM.from_pretrained(MODEL_NAME).eval()
+
+example_input_ids = tokenizer("こんにちは", return_tensors="pt").input_ids
+ov_model = ov.convert_model(pt_model, example_input=(example_input_ids,))
+
+core = ov.Core()
+compiled_model = core.compile_model(ov_model, device_name="GPU")  # GPU使用
+
+# ---------------------------
+# 翻訳関数（OpenVINO 用）
+# ---------------------------
+def ov_translate_text(text: str, max_tokens=50) -> str:
+    """
+    OpenVINO を使って文章を日本語→英語に翻訳する関数
+    """
+    if not text.strip():
+        return text
+
+    input_ids = tokenizer(text, return_tensors="np").input_ids  # numpy 配列
+
+    for _ in range(max_tokens):
+        logits = compiled_model({"input_ids": input_ids})[compiled_model.output(0)]
+        next_token = np.argmax(logits[0, -1, :])
+        input_ids = np.concatenate([input_ids, [[next_token]]], axis=1)
+        if next_token == tokenizer.eos_token_id:
+            break
+
+    return tokenizer.decode(input_ids[0], skip_special_tokens=True)
 
 
 
