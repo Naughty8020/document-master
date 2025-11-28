@@ -61,8 +61,12 @@ dependencies = [
     "ninja==1.13.0",
     "nncf==2.18.0",
     "numpy==1.26.4",
+<<<<<<< HEAD
     "openvino==2023.2.0",
     "optimum[openvino]>=1.1.1",
+=======
+    "openvino-dev[onnx,pytorch,tools]>=2024.6.0",
+>>>>>>> cbb6591cdb62334f1961ca0e26903eb4261e6db1
     "packaging==25.0",
     "pandas==2.3.3",
     "pathspec==0.12.1",
