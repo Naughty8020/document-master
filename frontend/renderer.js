@@ -165,6 +165,9 @@ replaceBtn.addEventListener("click", () => {
 // ---------------------
 // ★ ファイル選択
 // ---------------------
+
+let selectedFilename = null;
+
 const filename = document.getElementById("currentFileName");
 
 btn.addEventListener("click", async () => {
@@ -174,15 +177,17 @@ btn.addEventListener("click", async () => {
 
         fileSelected = true;
         fileData = data;
+        console.log("Received file data:", data);
         slides = data.slides;
         document.getElementById("slideCountText").textContent = `1 / ${slides.length}`;
 
-        
+        selectedFilename = data.path;
         selectedFilePath = data.path;
         slidesData = data;
 
         console.log("Selected file data:", data);
         console.log("filename element:", data.filename);
+        console.log("slides loaded:", selectedFilePath);
 
         // エラーがあれば表示して終了
         if (data.error) {
@@ -311,6 +316,7 @@ saveBtn.addEventListener("click", async () => {
     const currentShapes = slides[currentIndex].shapes;
 
     const payload = {
+        selectedFilename,
         slide_index: currentIndex,
         shapes: currentShapes.map((s, i) => ({
             shape_index: i,
@@ -318,14 +324,29 @@ saveBtn.addEventListener("click", async () => {
         })),
     };
 
-    const res = await fetch("http://127.0.0.1:8000/saveppt", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-    });
+    console.log("📤 送信されるファイルパス (file_path):", payload.selectedFilename);
+    console.log("📦 送信される全ペイロード:", payload);
+    try {
+        const res = await fetch("http://127.0.0.1:8000/saveppt", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
 
-    const data = await res.json();
-    console.log("save result:", data);
+        let data;
+        if (res.ok) {
+            // 成功時は JSON として取得
+            data = await res.json();
+        } else {
+            // エラー時は text() で取得
+            const text = await res.text();
+            throw new Error(text);
+        }
+
+        console.log("save result:", data);
+    } catch (err) {
+        console.error("Save failed:", err.message);
+    }
 });
 
 // ---------------------

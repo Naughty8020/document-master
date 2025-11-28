@@ -124,6 +124,7 @@ async def load_file():
         return {"error": "ファイルが選択されていません"}
 
     filepath = path
+    print( "選択されたファイルパス:", filepath)
     filename = os.path.basename(path)
     ext = os.path.splitext(path)[1].lower()
     slides = []
@@ -190,7 +191,7 @@ async def load_file():
     else:
         return {"error": f"{ext}形式は未対応です"}
 
-    return {"path": path, "filename": filename, "slides": slides, "ext": ext}
+    return {"path": path,"filepath":filepath, "filename": filename, "slides": slides, "ext": ext}
 
 # ----------------------------------------------------
 # /translate_text (翻訳モデルがないため、このAPIは機能しない可能性があります)
@@ -344,39 +345,40 @@ def test_endpoint(payload: dict = Body(...)):
         slides_info.append({"slide_index": slide_index, "shapes": shapes_info})
 
     return {"status": "ok", "slides": slides_info}
-
+from fastapi import Body
+from pptx import Presentation
+import os
+import io
 
 @app.post("/savetest")
 def save_test_endpoint(payload: dict = Body(...)):
     selectedFilePath = payload.get("selectedFilePath")
-
-    prs = Presentation(selectedFilePath)
+    
+    # ---- 元ファイルをメモリ上で読み込む ----
+    with open(selectedFilePath, "rb") as f:
+        pptx_bytes = f.read()
+    prs = Presentation(io.BytesIO(pptx_bytes))
 
     # ---- 位置情報抽出 ----
     slides_info = []
-
     for slide_index, slide in enumerate(prs.slides):
         shapes_info = []
-
         for shape_index, shape in enumerate(slide.shapes):
-            # テキスト有無チェック
             text = shape.text if shape.has_text_frame else ""
-
             shapes_info.append({
                 "shape_index": shape_index,
-                "left": shape.left,       # X座標
-                "top": shape.top,         # Y座標
+                "left": shape.left,
+                "top": shape.top,
                 "width": shape.width,
                 "height": shape.height,
                 "text": text
             })
-
         slides_info.append({
             "slide_index": slide_index,
             "shapes": shapes_info
         })
 
-    # ---- 保存処理 ----
+    # ---- 別名で保存 ----
     test_save_path = os.path.splitext(selectedFilePath)[0] + "_test.pptx"
     prs.save(test_save_path)
 
@@ -387,64 +389,92 @@ def save_test_endpoint(payload: dict = Body(...)):
     }
 
 
+
 # ----------------------------------------------------
 # /savefile (ユーザーの要望通り、閉じる処理を残す)
 # ----------------------------------------------------
-@app.post("/savefile")
-def savefile_endpoint(payload: dict = Body(...)):
-    global prs, filepath
-    if prs is None or filepath is None:
-        return {"error": "保存するファイルがありません。ファイルを先にロードしてください。"}
 
-    slides_data = payload.get("slides", [])
+import logging
 
-    # --- メモリ上のprsオブジェクトを編集 ---
-    for slide_item in slides_data:
+logging.basicConfig(level=logging.INFO)
+@app.post("/saveppt")
+def save_ppt_endpoint(payload: dict = Body(...)):
+    """
+    フロントエンドから送られた単一スライドのシェイプデータをPPTXファイルに保存する。
+    """
+    selectedFilePath = payload.get("selectedFilename")
+    print( selectedFilePath)    
+    slide_index_to_update = payload.get("slide_index")
+    shapes_data = payload.get("shapes", [])
+    
+    # ログで受信データを確認
+    logging.info(f"Selected file path: {selectedFilePath}")
+    logging.info(f"Slide index to update: {slide_index_to_update}")
+
+    # --- 1. エラーチェック ---
+    if not selectedFilePath:
+        return {"status": "error", "message": "File path is missing"}
+    
+    if slide_index_to_update is None:
+        return {"status": "error", "message": "Slide index is missing"}
+
+    # --- 2. ファイルの読み込み ---
+    try:
+        with open(selectedFilePath, "rb") as f:
+            pptx_bytes = f.read()
+    except FileNotFoundError:
+        return {"status": "error", "message": f"File not found: {selectedFilePath}"}
+    
+    prs = Presentation(io.BytesIO(pptx_bytes))
+    
+    # --- 3. 特定のスライドのテキストを更新 ---
+    try:
+        # 更新対象のスライドを取得
+        slide = prs.slides[slide_index_to_update]
+    except IndexError:
+        return {"status": "error", "message": f"Invalid slide index: {slide_index_to_update}. Total slides: {len(prs.slides)}"}
+    
+    for shape_data in shapes_data:
+        shape_index = shape_data.get("shape_index")
+        text_content = shape_data.get("text", "")
+        
+        if shape_index is None:
+            logging.warning("Received shape data without shape_index. Skipping.")
+            continue
+
         try:
-            slide = prs.slides[slide_item["slide_index"]]
-        except IndexError:
-            continue # スライドインデックスが不正ならスキップ
-
-        for shape_item in slide_item["shapes"]:
-            try:
-                shape = slide.shapes[shape_item["shape_index"]]
-            except IndexError:
-                continue # シェイプインデックスが不正ならスキップ
-
-            if not shape.has_text_frame:
-                continue
-
-            tf = shape.text_frame
-
-            # ---- 部分的 paragraph 置換 ----
-            if "paragraphs" in shape_item:
-                for p_item in shape_item["paragraphs"]:
-                    p_index = p_item.get("paragraph_index")
-                    new_text = p_item.get("text", "")
-
-                    # index が範囲外なら無視
-                    if p_index is None or p_index >= len(tf.paragraphs):
-                        continue
-
-                    para = tf.paragraphs[p_index]
-                    para.clear()    # ※中の runs をクリア
-                    para.text = new_text
-
-            # paragraphs が無い → 元の段落すべて維持 (処理なし)
+            # 更新対象のシェイプを取得
+            shape = slide.shapes[shape_index]
+            
+            # テキストフレームを持つシェイプ（プレースホルダーなど）のみ更新
+            if hasattr(shape, "text_frame"):
+                shape.text = text_content
+                logging.info(f"Updated slide {slide_index_to_update}, shape {shape_index}")
             else:
-                pass
-    
-    # --- 🚨 Mac環境のみでPowerPointを閉じる処理 🚨 ---
-    # 【重要】prs.save() が成功するためには、この行は技術的には不要ですが、
-    # ユーザーのデスクトップで開いているGUIアプリを閉じるために実行します。
-    # 以下の呼び出しは、Macのローカル環境でのみ動作します。
-    close_all_powerpoint_presentations_mac(save_changes=False) 
+                 logging.info(f"Shape {shape_index} on slide {slide_index_to_update} is not a text shape. Skipping.")
 
-    # --- ファイルをディスクに保存 ---
-    # python-pptxによる保存処理は、アプリが閉じられていても実行されます。
-    prs.save(filepath)
+        except IndexError:
+            logging.warning(f"Shape index {shape_index} not found on slide {slide_index_to_update}. Skipping.")
+            continue
     
-    return {"status": "ok", "message": f"ファイルを保存し、PowerPointアプリケーションを閉じました。"}
+    # --- 4. ファイルの保存 ---
+    base, ext = os.path.splitext(selectedFilePath)
+    save_path = f"{base}_edited.pptx"
+
+    # 保存先ディレクトリの確認・作成
+    save_dir = os.path.dirname(save_path)
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+
+    try:
+        prs.save(save_path)
+    except Exception as e:
+        logging.error(f"Failed to save the presentation: {str(e)}")
+        return {"status": "error", "message": f"Failed to save: {str(e)}"}
+
+    logging.info(f"File saved at: {save_path}")
+    
+    return {"status": "ok", "saved_path": save_path}
 
 from pydantic import BaseModel
 from pptx.util import Inches, Pt
@@ -510,34 +540,34 @@ def insert_slide(data: TextData):
 
 
 
-class ShapeItem(BaseModel):
-    shape_index: int
-    text: str
+# class ShapeItem(BaseModel):
+#     shape_index: int
+#     text: str
 
-class SavePayload(BaseModel):
-    slide_index: int
-    shapes: list[ShapeItem]
+# class SavePayload(BaseModel):
+#     slide_index: int
+#     shapes: list[ShapeItem]
 
 
-@app.post("/saveppt")
-def saveppt(data: SavePayload):
-    global prs, filepath
+# @app.post("/saveppt")
+# def saveppt(data: SavePayload):
+#     global prs, filepath
 
-    slide = prs.slides[data.slide_index]
+#     slide = prs.slides[data.slide_index]
 
-    for item in data.shapes:
-        try:
-            shape = slide.shapes[item.shape_index]
-        except:
-            continue
+#     for item in data.shapes:
+#         try:
+#             shape = slide.shapes[item.shape_index]
+#         except:
+#             continue
 
-        if not shape.has_text_frame:
-            continue
+#         if not shape.has_text_frame:
+#             continue
 
-        tf = shape.text_frame
-        tf.clear()
-        tf.text = item.text
+#         tf = shape.text_frame
+#         tf.clear()
+#         tf.text = item.text
 
-    prs.save(filepath)
+#     prs.save(filepath)
 
-    return {"status": "ok"}
+#     return {"status": "ok"}
