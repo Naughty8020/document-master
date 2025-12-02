@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './App.css'; // スタイルファイルがある場合
+import "./main.css";
 
 // ここではダミーのイベントハンドラを定義しますが、
 // 実際のElectron/APIロジックはここで実装または呼び出します。

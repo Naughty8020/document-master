@@ -1,0 +1,15 @@
+{
+    "name": "electron-app",
+    "main": "main.js",
+    "scripts": {
+      "dev": "concurrently \"npm:start:frontend\" \"npm:start:electron\"",
+      "start:electron": "electron .",
+      "start:frontend": "cd ../frontend && npm run dev",
+      "build": "cd ../frontend && npm run build"
+    },
+    "devDependencies": {
+      "electron": "^28.0.0",
+      "concurrently": "^8.0.0"
+    }
+  }
+  
