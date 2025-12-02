@@ -1,14 +1,44 @@
-# Python-generated files
+# Python bytecode
 __pycache__/
-*.py[oc]
-build/
-dist/
-wheels/
-*.egg-info
+*.py[cod]
+*$py.class
 
 # Virtual environments
-.venv
-backend/backend/models/onnx/mbart_encoder.onnx
-backend/backend/models/onnx/mbart_encoder.onnx.data
+.venv/
+.venv_new/
+pipenv/   # pipenv フォルダがある場合
 
-document-master_backup/
+# OpenVINO / モデル関連
+openvino_model/
+ov_opusmt_ja_en/
+
+# PyTorch / Transformers / HF キャッシュ
+*.pt
+*.bin
+*.onnx
+*.safetensors
+*.lock
+hf_cache/
+transformers_cache/
+
+# IDE / エディタ関連
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS 一時ファイル
+.DS_Store
+Thumbs.db
+*.log
+
+# その他生成ファイル
+*.pyc
+*.pyo
+*.pyd
+*.so
+*.dylib
+
+# Docker
+*.dockerignore
+*.env

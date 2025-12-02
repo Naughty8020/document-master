@@ -1,18 +1,61 @@
-# General / Node / System Files
+# ==========================================================
+# General / System Files
+# ==========================================================
+.DS_Store
+.env
+*.log
+
+# ==========================================================
+# Node (if using any JS tooling)
+# ==========================================================
 node_modules/
 npm-debug.log
-.env
-.DS_Store
 
-# Python Environments & Build Output
+# ==========================================================
+# Python Cache & Build
+# ==========================================================
 __pycache__/
 *.py[oc]
+*.pyo
+*.pyd
+
+# Python build outputs
 build/
 dist/
 wheels/
 *.egg-info
-.venv
 
-# Large Model Files (Specific)
+# Python environments
+.venv/
+venv/
+env/
+
+# ==========================================================
+# uv (Python package manager)
+# ==========================================================
+.uv/
+uv.lock
+
+# ==========================================================
+# OpenVINO / ONNX exported models (large binaries)
+# ==========================================================
+ov_opusmt_ja_en/
+ov_bert_model/
+ov_fugumt_ja_en/
+ov_fugumt_ja_en_onnx/
+
+# If you keep models under backend/backend/models
 backend/backend/models/onnx/mbart_encoder.onnx
 backend/backend/models/onnx/mbart_encoder.onnx.data
+
+# If later you export other model binaries under backend/backend/models
+backend/backend/models/**/*.onnx
+backend/backend/models/**/*.bin
+backend/backend/models/**/*.xml
+
+# ==========================================================
+# Other temporary or generated files
+# ==========================================================
+*.tmp
+*.bak
+*.swp
