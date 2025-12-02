@@ -32,7 +32,7 @@
 }
 
 .sidebar-title {
-  font-size: 20px;
+  font-size: 19px;
   margin-bottom: 18px;
   padding-left: 10px;
   opacity: 0.8;
@@ -41,6 +41,10 @@
   font-family: "Mochiy Pop One", sans-serif;   
   font-weight: 700;   
   font-style: normal; 
+
+  white-space: nowrap;      /* ← 折り返し禁止 */
+  overflow: hidden;         /* ← はみ出し部分を隠す */
+  
 }
 
 .menu-item {
@@ -125,7 +129,7 @@ body {
   cursor: pointer;
 }
 
-.header-save-btn:hover { background: #3a76ff; }
+.header-save-btn:hover { background: #1a6aff; }
 
 /* ----- Google翻訳風2カラムレイアウト ----- */
 .translate-container {
@@ -171,7 +175,7 @@ body {
 }
 
 #insert-btn:hover {
-  background: #3a76ff;
+  background: #1a6aff;
 }
 
 .info-alert {
@@ -307,7 +311,7 @@ body {
   font-weight: 600;
 }
 
-#selectFileBtn:hover { background: #3a76ff; }
+#selectFileBtn:hover { background: #1a6aff; }
 
 .material-icons { font-size: 22px; vertical-align: middle; }
 
@@ -398,7 +402,7 @@ body {
 }
 
 #saveSettingBtn:hover {
-  background: #3a76ff;
+  background: #1a6aff;
 }
 
 #translateBtn {
@@ -413,7 +417,7 @@ body {
 }
 
 #translateBtn:hover {
-  background: #3a76ff;
+  background: #1a6aff;
 }
 
 #settingSavedMsg {
@@ -522,7 +526,7 @@ body {
 }
 
 #modal-close-btn:hover {
-  background: #3a76ff;
+  background: #1a6aff;
 }
 
 .modal-close-x {

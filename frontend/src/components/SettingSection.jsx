@@ -5,6 +5,7 @@ export default function SettingSection() {
   const [language, setLanguage] = useState("ja");
   const [hardware, setHardware] = useState("cpu");
   const [saved, setSaved] = useState(false);
+  const [hover, setHover] = useState(false);
 
   const handleSave = () => {
     setSaved(true);
@@ -162,9 +163,11 @@ export default function SettingSection() {
         <button
           id="saveSettingBtn"
           onClick={handleSave}
+          onMouseEnter={() => setHover(true)}
+          onMouseLeave={() => setHover(false)}
           style={{
             padding: "8px 16px",
-            background: "#195ff2",
+            background: hover ? "#1a6aff" : "#195ff2", // ← hover時に色変える
             color: "#fff",
             border: "1px solid rgba(27,31,36,0.15)",
             borderRadius: "6px",

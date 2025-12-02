@@ -47,7 +47,10 @@ export default function App() {
     setCurrentPage(target);
   };
 
-  const closeModal = () => setModalVisible(false);
+  const closeModalAndMoveToFile = () => {
+  setModalVisible(false);
+  setCurrentPage("file-section"); 
+};
 
   return (
     <div>
@@ -91,7 +94,8 @@ export default function App() {
         )}
         {currentPage === "setting-section" && <SettingSection />}
       </div>
-      {modalVisible && <Modal closeModal={closeModal} />}
+      {modalVisible && <Modal closeAndMove={closeModalAndMoveToFile} />}
+
     </div>
   );
 }
