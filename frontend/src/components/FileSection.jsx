@@ -66,8 +66,7 @@ export default function FileSection({
       <button onClick={() => fileInputRef.current.click()} id="selectFileBtn">
         ファイルを選択
       </button>
-      <button onClick={handleSelectFile}>取得</button>
-      <p style={{ marginTop: "10px", color: "#333" }}>{selectedFileName}</p>
+      
     </div>
   );
 }
