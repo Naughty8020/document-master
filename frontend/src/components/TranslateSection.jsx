@@ -9,15 +9,16 @@ export default function TranslateSection({
 }) {
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-  const [mode, setMode] = useState("before"); // before / after 切替
-  const [afterText, setAfterText] = useState(""); // AFTER用state
+  const [mode, setMode] = useState("before");
+  const [afterText, setAfterText] = useState("");
 
-  // ▼ スライド一覧 開閉
+  // ★ 翻訳中フラグ
+  const [isTranslating, setIsTranslating] = useState(false);
+
   const toggleSelector = () => {
     setIsSelectorOpen(!isSelectorOpen);
   };
 
-  // ▼ 選択中スライドの before テキスト
   const beforeText = TranslateDate?.slides?.[currentSlideIndex]?.shapes
     ?.map(shape =>
       shape.paragraphs
@@ -28,12 +29,14 @@ export default function TranslateSection({
     .join("\n\n") || "";
 
   // --------------------
-  // ▼ 翻訳ボタン
+  // ▼ 翻訳
   // --------------------
   const handleTranslate = async () => {
     if (!slides || slides.length === 0) return alert("翻訳対象がありません");
 
     try {
+      setIsTranslating(true); // ★ 翻訳中スタート
+
       const res = await fetch("http://127.0.0.1:8000/translate_text", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -43,7 +46,6 @@ export default function TranslateSection({
       const data = await res.json();
       const tSlides = data.translated_text.slides;
 
-      // AFTER用 state にセット
       const allText =
         tSlides
           .map(slide =>
@@ -60,7 +62,6 @@ export default function TranslateSection({
 
       setAfterText(allText);
 
-      // React state の slides も更新
       const newSlides = slides.map((slide, i) => ({
         ...slide,
         shapes: slide.shapes.map((shape, j) => ({
@@ -76,11 +77,13 @@ export default function TranslateSection({
       alert("翻訳完了");
     } catch (err) {
       console.error(err);
+    } finally {
+      setIsTranslating(false); // ★ 翻訳中終了
     }
   };
 
   // --------------------
-  // ▼ 保存ボタン
+  // ▼ 保存
   // --------------------
   const handleSave = async () => {
     if (!slides || slides.length === 0) return alert("保存対象がありません");
@@ -114,12 +117,43 @@ export default function TranslateSection({
   return (
     <div id="translate-section" className="page">
 
+      {/* ▼ 翻訳中モーダル */}
+      {isTranslating && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            background: "rgba(0,0,0,0.4)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 9999,
+          }}
+        >
+          <div
+            style={{
+              background: "white",
+              padding: "30px 40px",
+              borderRadius: "8px",
+              fontSize: "20px",
+              boxShadow: "0 0 20px rgba(0,0,0,0.3)",
+            }}
+          >
+            翻訳中…
+          </div>
+        </div>
+      )}
+
       {/* ▼ スライド一覧 */}
       <div style={{ position: "relative", display: "inline-block" }}>
         <button
           id="slideSelectorBtn"
           className="menu-item"
           onClick={toggleSelector}
+          disabled={isTranslating}
         >
           スライド（{currentSlideIndex + 1} / {slides?.length || 0}）
           <ArrowDropDownIcon className="arrow-icon" />
@@ -167,6 +201,7 @@ export default function TranslateSection({
             background: "transparent",
             border: "none",
           }}
+          disabled={isTranslating}
         >
           before
         </button>
@@ -181,6 +216,7 @@ export default function TranslateSection({
             background: "transparent",
             border: "none",
           }}
+          disabled={isTranslating}
         >
           after
         </button>
@@ -218,7 +254,7 @@ export default function TranslateSection({
           onChange={(e) => setAfterText(e.target.value)}
           style={{
             width: "100%",
-            height: "300px",
+                       height: "300px",
             marginTop: "10px",
             border: "1px solid #ccc",
             padding: "8px",
@@ -229,6 +265,7 @@ export default function TranslateSection({
             fontFamily: "inherit",
             fontSize: "14px",
           }}
+          disabled={isTranslating}
         />
       )}
 
@@ -239,6 +276,7 @@ export default function TranslateSection({
           className="header-save-btn"
           onClick={handleSave}
           style={{ marginRight: "10px" }}
+          disabled={isTranslating}
         >
           保存
         </button>
@@ -247,8 +285,9 @@ export default function TranslateSection({
           id="translateBtn"
           className="header-save-btn"
           onClick={handleTranslate}
+          disabled={isTranslating}
         >
-          翻訳
+          {isTranslating ? "翻訳中…" : "翻訳"}
         </button>
       </div>
     </div>
