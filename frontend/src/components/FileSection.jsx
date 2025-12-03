@@ -63,9 +63,11 @@ export default function FileSection({
       </div>
 
       <input type="file" ref={fileInputRef} style={{ display: "none" }} onChange={handleFileChange} />
-      <button onClick={() => fileInputRef.current.click()} id="selectFileBtn">
-        ファイルを選択
-      </button>
+      <button onClick={handleSelectFile} id="selectFileBtn">
+  ファイルを選択
+</button>
+
+        
       
     </div>
   );
