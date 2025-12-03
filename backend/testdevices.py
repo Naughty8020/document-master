@@ -11,7 +11,7 @@ class TranslatorModel:
         # OpenVINO モデル読み込み
         self.model = OVModelForSeq2SeqLM.from_pretrained(
             model_dir,
-            device="CPU",
+            device="GPU",
             compile=True
         )
 

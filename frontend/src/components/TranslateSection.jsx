@@ -39,7 +39,10 @@ export default function TranslateSection({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ slides }),
+        
       });
+
+      console.log("Translation response:", res);
 
       const data = await res.json();
       const tSlides = data.translated_text.slides;
