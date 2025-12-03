@@ -11,6 +11,7 @@ export default function FileSection({
   setSelectedFilePath,
   setCurrentIndex,
   textAreaRef,
+  handleSelectFile  
 }) {
   const handleFileChange = (e) => {
     if (e.target.files.length > 0) {
@@ -29,24 +30,8 @@ export default function FileSection({
 
   const handleDragOver = (e) => e.preventDefault();
 
-  const handleSelectFile = async () => {
-    try {
-      const res = await fetch("http://127.0.0.1:8000/get_file");
-      const data = await res.json();
-      setSlides(data.slides);
-      setSlidesData(data);
-      setSelectedFilePath(data.path);
-      setSelectedFileName(data.filename || "無題");
-      setFileSelected(true);
-      setCurrentIndex(0);
-      // 初期スライド表示はTextAreaで行う
-      if (textAreaRef.current) {
-        textAreaRef.current.value = "";
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  
+  
 
   return (
     <div id="file-section">

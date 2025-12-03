@@ -52,6 +52,26 @@ export default function App() {
   setCurrentPage("file-section"); 
 };
 
+const handleSelectFile = async () => {
+    try {
+      const res = await fetch("http://127.0.0.1:8000/get_file");
+      const data = await res.json();
+      console.log("Fetched file data:", data);
+      setSlides(data.slides);
+      setSlidesData(data);
+      setSelectedFilePath(data.path);
+      setSelectedFileName(data.filename || "無題");
+      setFileSelected(true);
+      setCurrentIndex(0);
+      // 初期スライド表示はTextAreaで行う
+      if (textAreaRef.current) {
+        textAreaRef.current.value = "";
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   return (
     <div>
       <Header
@@ -76,10 +96,11 @@ export default function App() {
             setSelectedFilePath={setSelectedFilePath}
             setCurrentIndex={setCurrentIndex}
             textAreaRef={textAreaRef}
+            handleSelectFile={handleSelectFile}
           />
         )}
         {currentPage === "translate-section" && (
-          <TranslateSection slides={slides} setSlides={setSlides} afterTextAreaRef={afterTextAreaRef} />
+          <TranslateSection slides={slides} setSlides={setSlides} afterTextAreaRef={afterTextAreaRef} TranslateDate={slidesData} />
         )}
         {currentPage === "textarea-section" && (
          <TextareaSection
