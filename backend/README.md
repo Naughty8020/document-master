@@ -35,10 +35,17 @@ uv run main.py
 
 uv add
 
+uv remove
+
+uv pip
+
 uv sync
 
+
+uv run uvicorn api:app --reload
 
 
 
 別モデル
 optimum-cli export openvino --model Helsinki-NLP/opus-mt-ja-en ov_opusmt_ja_en
+
