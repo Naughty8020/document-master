@@ -1,17 +1,16 @@
 import React, { useState } from "react";
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import "../css/translate.css"
+import "../css/translate.css";
 
 export default function TranslateSection({
   slides,
   setSlides,
-  afterTextAreaRef,
   TranslateDate
 }) {
-
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [mode, setMode] = useState("before"); // before / after 切替
+  const [afterText, setAfterText] = useState(""); // AFTER用state
 
   // ▼ スライド一覧 開閉
   const toggleSelector = () => {
@@ -39,51 +38,41 @@ export default function TranslateSection({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ slides }),
-        
       });
-
-      console.log("Translation response:", res);
 
       const data = await res.json();
       const tSlides = data.translated_text.slides;
 
-      // after 全体を textarea に流し込み
-      if (afterTextAreaRef.current) {
-        const allText =
-          tSlides
-            .map(slide =>
-              slide.shapes
-                .map(shape =>
-                  shape.paragraphs
-                    .map(p => p.text.trim())
-                    .filter(Boolean)
-                    .join("\n")
-                )
-                .join("\n\n")
-            )
-            .join("\n\n");
+      // AFTER用 state にセット
+      const allText =
+        tSlides
+          .map(slide =>
+            slide.shapes
+              .map(shape =>
+                shape.paragraphs
+                  .map(p => p.text.trim())
+                  .filter(Boolean)
+                  .join("\n")
+              )
+              .join("\n\n")
+          )
+          .join("\n\n");
 
-        afterTextAreaRef.current.value = allText;
-      }
+      setAfterText(allText);
 
       // React state の slides も更新
-      const newSlides = slides.map((slide, i) => {
-        return {
-          ...slide,
-          shapes: slide.shapes.map((shape, j) => {
-            return {
-              ...shape,
-              paragraphs: shape.paragraphs.map((p, k) => ({
-                ...p,
-                text: tSlides[i].shapes[j].paragraphs[k].text,
-              })),
-            };
-          }),
-        };
-      });
+      const newSlides = slides.map((slide, i) => ({
+        ...slide,
+        shapes: slide.shapes.map((shape, j) => ({
+          ...shape,
+          paragraphs: shape.paragraphs.map((p, k) => ({
+            ...p,
+            text: tSlides[i].shapes[j].paragraphs[k].text,
+          })),
+        })),
+      }));
 
       setSlides(newSlides);
-
       alert("翻訳完了");
     } catch (err) {
       console.error(err);
@@ -125,132 +114,123 @@ export default function TranslateSection({
   return (
     <div id="translate-section" className="page">
 
-      
-
       {/* ▼ スライド一覧 */}
       <div style={{ position: "relative", display: "inline-block" }}>
-  <button
-    id="slideSelectorBtn"
-    className="menu-item"
-    onClick={toggleSelector}
-  >
-    スライド（{currentSlideIndex + 1} / {slides?.length || 0}）
-    <ArrowDropDownIcon className="arrow-icon" />
-  </button>
-
-  {isSelectorOpen && (
-    <div id="slideSelectorList" className="slide-card">
-      {slides?.map((s, idx) => (
-        <div
-          key={idx}
-          onClick={() => {
-            setCurrentSlideIndex(idx);
-            setIsSelectorOpen(false);
-          }}
-          style={{
-            padding: "8px",
-            cursor: "pointer",
-            background: idx === currentSlideIndex ? "#eef" : "white",
-            borderBottom: "1px solid #ddd",
-          }}
+        <button
+          id="slideSelectorBtn"
+          className="menu-item"
+          onClick={toggleSelector}
         >
-          スライド {idx + 1}
-        </div>
-      ))}
-    </div>
-  )}
-</div>
+          スライド（{currentSlideIndex + 1} / {slides?.length || 0}）
+          <ArrowDropDownIcon className="arrow-icon" />
+        </button>
 
-
-    
+        {isSelectorOpen && (
+          <div id="slideSelectorList" className="slide-card">
+            {slides?.map((s, idx) => (
+              <div
+                key={idx}
+                onClick={() => {
+                  setCurrentSlideIndex(idx);
+                  setIsSelectorOpen(false);
+                }}
+                style={{
+                  padding: "8px",
+                  cursor: "pointer",
+                  background: idx === currentSlideIndex ? "#eef" : "white",
+                  borderBottom: "1px solid #ddd",
+                }}
+              >
+                スライド {idx + 1}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* ---------------- before / after 切替 ---------------- */}
       <div
-  style={{
-    marginTop: "10px",
-    marginBottom: "5px",
-    textAlign: "right",
-    display: "flex",
-    justifyContent: "flex-end",
-    alignItems: "center",
-    gap: "6px", // ボタンと / の間隔
-  }}
->
-  <button
-    onClick={() => setMode("before")}
-    style={{
-      color: mode === "before" ? "red" : "#444",
-      cursor: "pointer",
-      background: "transparent",
-      border: "none",
-    }}
-  >
-    before
-  </button>
+        style={{
+          marginTop: "10px",
+          marginBottom: "5px",
+          display: "flex",
+          justifyContent: "flex-end",
+          alignItems: "center",
+          gap: "6px",
+        }}
+      >
+        <button
+          onClick={() => setMode("before")}
+          style={{
+            color: mode === "before" ? "red" : "#444",
+            cursor: "pointer",
+            background: "transparent",
+            border: "none",
+          }}
+        >
+          before
+        </button>
 
-  <span>/</span>
+        <span>/</span>
 
-  <button
-    onClick={() => setMode("after")}
-    style={{
-      color: mode === "after" ? "blue" : "#444",
-      cursor: "pointer",
-      background: "transparent",
-      border: "none",
-    }}
-  >
-    after
-  </button>
-</div>
+        <button
+          onClick={() => setMode("after")}
+          style={{
+            color: mode === "after" ? "blue" : "#444",
+            cursor: "pointer",
+            background: "transparent",
+            border: "none",
+          }}
+        >
+          after
+        </button>
+      </div>
 
-     {/* ------------------- BEFORE --------------------- */}
-{mode === "before" && (
-  <textarea
-    id="before"
-    className="custom-textarea"
-    value={beforeText}
-    readOnly
-    style={{
-      width: "100%",
-      height: "300px",
-      marginTop: "10px",
-      border: "1px solid #ccc",
-      padding: "8px",
-      boxSizing: "border-box",
-      display: "block",
-      resize: "vertical",
-      backgroundColor: "#fff",
-      fontFamily: "inherit",
-      fontSize: "14px",
-    }}
-  />
-)}
+      {/* ------------------- BEFORE --------------------- */}
+      {mode === "before" && (
+        <textarea
+          id="before"
+          className="custom-textarea"
+          value={beforeText}
+          readOnly
+          style={{
+            width: "100%",
+            height: "300px",
+            marginTop: "10px",
+            border: "1px solid #ccc",
+            padding: "8px",
+            boxSizing: "border-box",
+            display: "block",
+            resize: "vertical",
+            backgroundColor: "#fff",
+            fontFamily: "inherit",
+            fontSize: "14px",
+          }}
+        />
+      )}
 
-{/* ------------------- AFTER --------------------- */}
-{mode === "after" && (
-  <textarea
-    id="after"
-    className="custom-textarea-after"
-    ref={afterTextAreaRef}
-    value={afterTextAreaRef.current?.value || ""} // 空でも枠を表示
-    onChange={() => {}}
-    style={{
-      width: "100%",
-      height: "300px",
-      marginTop: "10px",
-      border: "1px solid #ccc",
-      padding: "8px",
-      boxSizing: "border-box",
-      display: "block",
-      resize: "vertical",
-      backgroundColor: "#fff",
-      fontFamily: "inherit",
-      fontSize: "14px",
-    }}
-  />
-)}
-
-
+      {/* ------------------- AFTER --------------------- */}
+      {mode === "after" && (
+        <textarea
+          id="after"
+          className="custom-textarea-after"
+          value={afterText}
+          onChange={(e) => setAfterText(e.target.value)}
+          style={{
+            width: "100%",
+            height: "300px",
+            marginTop: "10px",
+            border: "1px solid #ccc",
+            padding: "8px",
+            boxSizing: "border-box",
+            display: "block",
+            resize: "vertical",
+            backgroundColor: "#fff",
+            fontFamily: "inherit",
+            fontSize: "14px",
+          }}
+        />
+      )}
 
       {/* ------------------- 保存 / 翻訳 --------------------- */}
       <div style={{ textAlign: "right", marginTop: "10px" }}>
