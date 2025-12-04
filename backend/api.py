@@ -389,13 +389,6 @@ def save_test_endpoint(payload: dict = Body(...)):
         "slides": slides_info
     }
 
-base, ext = os.path.splitext(selectedFilePath)
-
-# 元ファイルが *_edited.pptx になっているなら、そのまま上書き
-if selectedFilePath.endswith("_edited.pptx"):
-    save_path = selectedFilePath
-else:
-    save_path = f"{base}_edited.pptx"
 
 
 # ----------------------------------------------------
