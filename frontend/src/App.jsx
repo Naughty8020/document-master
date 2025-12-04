@@ -20,6 +20,7 @@ export default function App() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [slidesData, setSlidesData] = useState(null);
   const [selectedFilePath, setSelectedFilePath] = useState(null);
+  const [filepath, setFilepath] = useState("");
 
   const textAreaRef = useRef(null);
   const afterTextAreaRef = useRef(null);
@@ -61,9 +62,12 @@ const handleSelectFile = async () => {
       setSlidesData(data);
       setSelectedFilePath(data.path);
       setSelectedFileName(data.filename || "無題");
+      setFilepath(data.path);
       setFileSelected(true);
       setCurrentIndex(0);
       // 初期スライド表示はTextAreaで行う
+
+      setCurrentPage("translate-section");
       if (textAreaRef.current) {
         textAreaRef.current.value = "";
       }
@@ -100,7 +104,7 @@ const handleSelectFile = async () => {
           />
         )}
         {currentPage === "translate-section" && (
-          <TranslateSection slides={slides} setSlides={setSlides} afterTextAreaRef={afterTextAreaRef} TranslateDate={slidesData} />
+          <TranslateSection slides={slides} setSlides={setSlides} afterTextAreaRef={afterTextAreaRef} TranslateDate={slidesData} filepath={filepath} setFilepath={setFilepath}/>
         )}
         {currentPage === "textarea-section" && (
          <TextareaSection

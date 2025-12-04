@@ -1,24 +1,25 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import "../css/translate.css";
 
 export default function TranslateSection({
   slides,
   setSlides,
-  TranslateDate
+  TranslateDate,
+  filepath,
 }) {
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [mode, setMode] = useState("before");
   const [afterText, setAfterText] = useState("");
 
-  // ★ 翻訳中フラグ
   const [isTranslating, setIsTranslating] = useState(false);
 
   const toggleSelector = () => {
     setIsSelectorOpen(!isSelectorOpen);
   };
 
+  // BEFORE テキスト
   const beforeText = TranslateDate?.slides?.[currentSlideIndex]?.shapes
     ?.map(shape =>
       shape.paragraphs
@@ -28,90 +29,93 @@ export default function TranslateSection({
     )
     .join("\n\n") || "";
 
+  // AFTER 更新
+  useEffect(() => {
+    if (!slides || slides.length === 0) return;
+
+    const slide = slides[currentSlideIndex];
+    const t =
+      slide.shapes
+        ?.map(s =>
+          s.paragraphs?.map(p => p.text.trim()).filter(Boolean).join("\n")
+        )
+        .join("\n\n") || "";
+
+    setAfterText(t);
+  }, [currentSlideIndex, slides]);
+
   // --------------------
-  // ▼ 翻訳
+  // ▼ 翻訳（現在のスライドだけ）
   // --------------------
   const handleTranslate = async () => {
     if (!slides || slides.length === 0) return alert("翻訳対象がありません");
 
     try {
-      setIsTranslating(true); // ★ 翻訳中スタート
+      setIsTranslating(true);
 
+      const currentSlide = slides[currentSlideIndex];
+
+      // ▼ 現在のスライドだけ送信
       const res = await fetch("http://127.0.0.1:8000/translate_text", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slides }),
+        body: JSON.stringify({ slide: currentSlide }),
       });
 
       const data = await res.json();
-      const tSlides = data.translated_text.slides;
+      const translatedSlide = data.translated_text.slide;
 
-      const allText =
-        tSlides
-          .map(slide =>
-            slide.shapes
-              .map(shape =>
-                shape.paragraphs
-                  .map(p => p.text.trim())
-                  .filter(Boolean)
-                  .join("\n")
-              )
-              .join("\n\n")
-          )
-          .join("\n\n");
-
-      setAfterText(allText);
-
-      const newSlides = slides.map((slide, i) => ({
-        ...slide,
-        shapes: slide.shapes.map((shape, j) => ({
-          ...shape,
-          paragraphs: shape.paragraphs.map((p, k) => ({
-            ...p,
-            text: tSlides[i].shapes[j].paragraphs[k].text,
-          })),
-        })),
-      }));
+      // ▼ 他スライドには触らず、現在のスライドのみ更新
+      const newSlides = slides.map((slide, i) =>
+        i === currentSlideIndex
+          ? {
+              ...slide,
+              shapes: slide.shapes.map((shape, j) => ({
+                ...shape,
+                paragraphs: shape.paragraphs.map((p, k) => ({
+                  ...p,
+                  text: translatedSlide.shapes[j].paragraphs[k].text,
+                })),
+              })),
+            }
+          : slide
+      );
 
       setSlides(newSlides);
       alert("翻訳完了");
     } catch (err) {
       console.error(err);
     } finally {
-      setIsTranslating(false); // ★ 翻訳中終了
+      setIsTranslating(false);
     }
   };
 
   // --------------------
-  // ▼ 保存
+  // ▼ 保存（現在のスライドだけ）
   // --------------------
   const handleSave = async () => {
     if (!slides || slides.length === 0) return alert("保存対象がありません");
-
-    const currentShapes = slides[currentSlideIndex].shapes;
-
+  
+    const currentSlide = slides[currentSlideIndex];
+  
     const payload = {
+      selectedFilePath: filepath,
       slide_index: currentSlideIndex,
-      shapes: currentShapes.map((s, i) => ({
+      shapes: currentSlide.shapes.map((s, i) => ({
         shape_index: i,
         text: s.paragraphs?.map(p => p.text).join("\n") || "",
       })),
     };
-
-    try {
-      const res = await fetch("http://127.0.0.1:8000/saveppt", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-      console.log("save result:", data);
-      alert("保存完了");
-    } catch (err) {
-      console.error("保存エラー:", err);
-      alert("保存に失敗しました");
-    }
+  
+    const res = await fetch("http://127.0.0.1:8000/saveppt", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+  
+    const data = await res.json();
+    console.log(data);
+    alert("保存完了");
   };
 
   return (
@@ -126,23 +130,42 @@ export default function TranslateSection({
             left: 0,
             width: "100vw",
             height: "100vh",
-            background: "rgba(0,0,0,0.4)",
+            background: "rgba(0,0,0,0.45)",
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
             zIndex: 9999,
+            backdropFilter: "blur(2px)",
           }}
         >
           <div
             style={{
               background: "white",
-              padding: "30px 40px",
-              borderRadius: "8px",
+              padding: "30px 50px",
+              borderRadius: "14px",
               fontSize: "20px",
-              boxShadow: "0 0 20px rgba(0,0,0,0.3)",
+              boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "15px",
+              minWidth: "260px",
             }}
           >
-            翻訳中…
+            <div
+              style={{
+                width: "40px",
+                height: "40px",
+                border: "4px solid #ccc",
+                borderTop: "4px solid #4a90e2",
+                borderRadius: "50%",
+                animation: "spin 0.8s linear infinite",
+              }}
+            />
+
+            <div style={{ fontSize: "18px", fontWeight: "bold", color: "#333" }}>
+              翻訳中…
+            </div>
           </div>
         </div>
       )}
@@ -182,7 +205,7 @@ export default function TranslateSection({
         )}
       </div>
 
-      {/* ---------------- before / after 切替 ---------------- */}
+      {/* before / after */}
       <div
         style={{
           marginTop: "10px",
@@ -222,7 +245,7 @@ export default function TranslateSection({
         </button>
       </div>
 
-      {/* ------------------- BEFORE --------------------- */}
+      {/* BEFORE */}
       {mode === "before" && (
         <textarea
           id="before"
@@ -245,7 +268,7 @@ export default function TranslateSection({
         />
       )}
 
-      {/* ------------------- AFTER --------------------- */}
+      {/* AFTER */}
       {mode === "after" && (
         <textarea
           id="after"
@@ -254,7 +277,7 @@ export default function TranslateSection({
           onChange={(e) => setAfterText(e.target.value)}
           style={{
             width: "100%",
-                       height: "300px",
+            height: "300px",
             marginTop: "10px",
             border: "1px solid #ccc",
             padding: "8px",
@@ -269,7 +292,7 @@ export default function TranslateSection({
         />
       )}
 
-      {/* ------------------- 保存 / 翻訳 --------------------- */}
+      {/* 保存 / 翻訳 */}
       <div style={{ textAlign: "right", marginTop: "10px" }}>
         <button
           id="saveBtn"

@@ -1,0 +1,59 @@
+.translate-vertical {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+  }
+  
+  .translate-box {
+    width: 100%;
+  }
+  
+  .translate-textarea {
+    width: 100%;
+    height: 100px ; 
+    padding: 10px;
+    font-size: 14px;
+    resize: vertical;
+  }
+  
+  .arrow-box {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .arrow-icon {
+    font-size: 32px;
+    opacity: 0.7;
+    user-select: none;
+  }
+  
+
+  .insert-btn {
+    padding: 8px 16px;
+    background: #195ff2;
+    color: #fff;
+    border: 1px solid rgba(27,31,36,0.15);
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  
+  .insert-btn:hover {
+    background: #1a6aff;
+  }
+
+  .translate-insert{
+    padding: 8px 16px;
+    background: #195ff2;
+    color: #fff;
+    border: 1px solid rgba(27,31,36,0.15);
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  .translate-insert:hover {
+    background: #1a6aff;
+  }

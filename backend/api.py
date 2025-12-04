@@ -321,6 +321,7 @@ async def api_translate_text(data: SlidesToTranslate):
 # ----------------------------------------------------
 @app.post("/test")
 def test_endpoint(payload: dict = Body(...)):
+    print("Received payload:", payload)
     selectedFilePath = payload.get("selectedFilePath")
     prs = Presentation(selectedFilePath)
     slides_info = [] # 結果を返すために追加
@@ -398,27 +399,34 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 @app.post("/saveppt")
-def save_ppt_endpoint(payload: dict = Body(...)):
+def save_ppt_endpoint(payload: dict = Body(default={})):
     """
     フロントエンドから送られた単一スライドのシェイプデータをPPTXファイルに保存する。
     """
-    selectedFilePath = payload.get("selectedFilename")
-    print( selectedFilePath)    
+
+    # payload の中身をゆるく受け取り
+    if not isinstance(payload, dict):
+        return JSONResponse(
+            status_code=400,
+            content={"status": "error", "message": "Invalid payload format"},
+        )
+
+    selectedFilePath = payload.get("selectedFilePath")
     slide_index_to_update = payload.get("slide_index")
     shapes_data = payload.get("shapes", [])
-    
-    # ログで受信データを確認
+
+    print(payload)
     logging.info(f"Selected file path: {selectedFilePath}")
     logging.info(f"Slide index to update: {slide_index_to_update}")
 
-    # --- 1. エラーチェック ---
+    # --- エラーチェック ---
     if not selectedFilePath:
         return {"status": "error", "message": "File path is missing"}
     
     if slide_index_to_update is None:
         return {"status": "error", "message": "Slide index is missing"}
 
-    # --- 2. ファイルの読み込み ---
+    # --- ファイル読み込み ---
     try:
         with open(selectedFilePath, "rb") as f:
             pptx_bytes = f.read()
@@ -426,54 +434,42 @@ def save_ppt_endpoint(payload: dict = Body(...)):
         return {"status": "error", "message": f"File not found: {selectedFilePath}"}
     
     prs = Presentation(io.BytesIO(pptx_bytes))
-    
-    # --- 3. 特定のスライドのテキストを更新 ---
+
+    # --- スライド取得 ---
     try:
-        # 更新対象のスライドを取得
         slide = prs.slides[slide_index_to_update]
     except IndexError:
-        return {"status": "error", "message": f"Invalid slide index: {slide_index_to_update}. Total slides: {len(prs.slides)}"}
-    
+        return {"status": "error", "message": f"Invalid slide index: {slide_index_to_update}"}
+
+    # --- shapes 書き換え ---
     for shape_data in shapes_data:
         shape_index = shape_data.get("shape_index")
         text_content = shape_data.get("text", "")
-        
+
         if shape_index is None:
-            logging.warning("Received shape data without shape_index. Skipping.")
+            logging.warning("Missing shape_index. Skip.")
             continue
 
         try:
-            # 更新対象のシェイプを取得
             shape = slide.shapes[shape_index]
-            
-            # テキストフレームを持つシェイプ（プレースホルダーなど）のみ更新
             if hasattr(shape, "text_frame"):
                 shape.text = text_content
                 logging.info(f"Updated slide {slide_index_to_update}, shape {shape_index}")
-            else:
-                 logging.info(f"Shape {shape_index} on slide {slide_index_to_update} is not a text shape. Skipping.")
-
-        except IndexError:
-            logging.warning(f"Shape index {shape_index} not found on slide {slide_index_to_update}. Skipping.")
+        except Exception as e:
+            logging.warning(f"Shape update failed: {str(e)}")
             continue
-    
-    # --- 4. ファイルの保存 ---
+
+    # --- 保存 ---
     base, ext = os.path.splitext(selectedFilePath)
     save_path = f"{base}_edited.pptx"
 
-    # 保存先ディレクトリの確認・作成
     save_dir = os.path.dirname(save_path)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
-    try:
-        prs.save(save_path)
-    except Exception as e:
-        logging.error(f"Failed to save the presentation: {str(e)}")
-        return {"status": "error", "message": f"Failed to save: {str(e)}"}
-
+    prs.save(save_path)
     logging.info(f"File saved at: {save_path}")
-    
+
     return {"status": "ok", "saved_path": save_path}
 
 from pydantic import BaseModel
@@ -538,6 +534,26 @@ def insert_slide(data: TextData):
     # try...exceptブロックの外に出すことで、エラーが発生しなかった場合のみ実行される
     return {"status": "ok", "message": "新しいスライドを追加しました。"}
 
+
+
+
+class TranslateOnly(BaseModel):
+    text: str
+
+@app.post("/insert-translate")
+def insert_and_translate(data: TranslateOnly):
+    try:
+        # ① 翻訳
+        translated_text = TRANS_MODEL.translate_text(data.text)
+
+        return {
+            "status": "ok",
+            "translated_text": translated_text
+        }
+
+    except Exception as e:
+        print("error:", e)
+        return {"status": "error", "message": "翻訳失敗"}
 
 
 # class ShapeItem(BaseModel):
