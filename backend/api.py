@@ -389,6 +389,13 @@ def save_test_endpoint(payload: dict = Body(...)):
         "slides": slides_info
     }
 
+base, ext = os.path.splitext(selectedFilePath)
+
+# 元ファイルが *_edited.pptx になっているなら、そのまま上書き
+if selectedFilePath.endswith("_edited.pptx"):
+    save_path = selectedFilePath
+else:
+    save_path = f"{base}_edited.pptx"
 
 
 # ----------------------------------------------------
@@ -399,34 +406,27 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 @app.post("/saveppt")
-def save_ppt_endpoint(payload: dict = Body(default={})):
+def save_ppt_endpoint(payload: dict = Body(...)):
     """
     フロントエンドから送られた単一スライドのシェイプデータをPPTXファイルに保存する。
     """
-
-    # payload の中身をゆるく受け取り
-    if not isinstance(payload, dict):
-        return JSONResponse(
-            status_code=400,
-            content={"status": "error", "message": "Invalid payload format"},
-        )
-
     selectedFilePath = payload.get("selectedFilePath")
+    print( payload )    
     slide_index_to_update = payload.get("slide_index")
     shapes_data = payload.get("shapes", [])
-
-    print(payload)
+    print("★★ selectedFilePath:", selectedFilePath)
+    # ログで受信データを確認
     logging.info(f"Selected file path: {selectedFilePath}")
     logging.info(f"Slide index to update: {slide_index_to_update}")
 
-    # --- エラーチェック ---
+    # --- 1. エラーチェック ---
     if not selectedFilePath:
         return {"status": "error", "message": "File path is missing"}
     
     if slide_index_to_update is None:
         return {"status": "error", "message": "Slide index is missing"}
 
-    # --- ファイル読み込み ---
+    # --- 2. ファイルの読み込み ---
     try:
         with open(selectedFilePath, "rb") as f:
             pptx_bytes = f.read()
@@ -434,42 +434,54 @@ def save_ppt_endpoint(payload: dict = Body(default={})):
         return {"status": "error", "message": f"File not found: {selectedFilePath}"}
     
     prs = Presentation(io.BytesIO(pptx_bytes))
-
-    # --- スライド取得 ---
+    
+    # --- 3. 特定のスライドのテキストを更新 ---
     try:
+        # 更新対象のスライドを取得
         slide = prs.slides[slide_index_to_update]
     except IndexError:
-        return {"status": "error", "message": f"Invalid slide index: {slide_index_to_update}"}
-
-    # --- shapes 書き換え ---
+        return {"status": "error", "message": f"Invalid slide index: {slide_index_to_update}. Total slides: {len(prs.slides)}"}
+    
     for shape_data in shapes_data:
         shape_index = shape_data.get("shape_index")
         text_content = shape_data.get("text", "")
-
+        
         if shape_index is None:
-            logging.warning("Missing shape_index. Skip.")
+            logging.warning("Received shape data without shape_index. Skipping.")
             continue
 
         try:
+            # 更新対象のシェイプを取得
             shape = slide.shapes[shape_index]
+            
+            # テキストフレームを持つシェイプ（プレースホルダーなど）のみ更新
             if hasattr(shape, "text_frame"):
                 shape.text = text_content
                 logging.info(f"Updated slide {slide_index_to_update}, shape {shape_index}")
-        except Exception as e:
-            logging.warning(f"Shape update failed: {str(e)}")
-            continue
+            else:
+                 logging.info(f"Shape {shape_index} on slide {slide_index_to_update} is not a text shape. Skipping.")
 
-    # --- 保存 ---
+        except IndexError:
+            logging.warning(f"Shape index {shape_index} not found on slide {slide_index_to_update}. Skipping.")
+            continue
+    
+    # --- 4. ファイルの保存 ---
     base, ext = os.path.splitext(selectedFilePath)
     save_path = f"{base}_edited.pptx"
 
+    # 保存先ディレクトリの確認・作成
     save_dir = os.path.dirname(save_path)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
-    prs.save(save_path)
-    logging.info(f"File saved at: {save_path}")
+    try:
+        prs.save(save_path)
+    except Exception as e:
+        logging.error(f"Failed to save the presentation: {str(e)}")
+        return {"status": "error", "message": f"Failed to save: {str(e)}"}
 
+    logging.info(f"File saved at: {save_path}")
+    
     return {"status": "ok", "saved_path": save_path}
 
 from pydantic import BaseModel

@@ -29,7 +29,7 @@ export default function TranslateSection({
     )
     .join("\n\n") || "";
 
-  // AFTER 更新
+  // 🔥 スライド切替時 AFTER テキスト更新
   useEffect(() => {
     if (!slides || slides.length === 0) return;
 
@@ -45,7 +45,7 @@ export default function TranslateSection({
   }, [currentSlideIndex, slides]);
 
   // --------------------
-  // ▼ 翻訳（現在のスライドだけ）
+  // ▼ 翻訳
   // --------------------
   const handleTranslate = async () => {
     if (!slides || slides.length === 0) return alert("翻訳対象がありません");
@@ -53,33 +53,26 @@ export default function TranslateSection({
     try {
       setIsTranslating(true);
 
-      const currentSlide = slides[currentSlideIndex];
-
-      // ▼ 現在のスライドだけ送信
       const res = await fetch("http://127.0.0.1:8000/translate_text", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slide: currentSlide }),
+        body: JSON.stringify({ slides }),
       });
 
       const data = await res.json();
-      const translatedSlide = data.translated_text.slide;
+      const tSlides = data.translated_text.slides;
 
-      // ▼ 他スライドには触らず、現在のスライドのみ更新
-      const newSlides = slides.map((slide, i) =>
-        i === currentSlideIndex
-          ? {
-              ...slide,
-              shapes: slide.shapes.map((shape, j) => ({
-                ...shape,
-                paragraphs: shape.paragraphs.map((p, k) => ({
-                  ...p,
-                  text: translatedSlide.shapes[j].paragraphs[k].text,
-                })),
-              })),
-            }
-          : slide
-      );
+      // 翻訳結果を slides に反映
+      const newSlides = slides.map((slide, i) => ({
+        ...slide,
+        shapes: slide.shapes.map((shape, j) => ({
+          ...shape,
+          paragraphs: shape.paragraphs.map((p, k) => ({
+            ...p,
+            text: tSlides[i].shapes[j].paragraphs[k].text,
+          })),
+        })),
+      }));
 
       setSlides(newSlides);
       alert("翻訳完了");
@@ -91,16 +84,17 @@ export default function TranslateSection({
   };
 
   // --------------------
-  // ▼ 保存（現在のスライドだけ）
+  // ▼ 保存
   // --------------------
   const handleSave = async () => {
     if (!slides || slides.length === 0) return alert("保存対象がありません");
   
+    // ▼ 現在のスライドだけ
     const currentSlide = slides[currentSlideIndex];
   
     const payload = {
       selectedFilePath: filepath,
-      slide_index: currentSlideIndex,
+      slide_index: currentSlideIndex,               // ←バックエンドが必要としている
       shapes: currentSlide.shapes.map((s, i) => ({
         shape_index: i,
         text: s.paragraphs?.map(p => p.text).join("\n") || "",
@@ -117,6 +111,7 @@ export default function TranslateSection({
     console.log(data);
     alert("保存完了");
   };
+  
 
   return (
     <div id="translate-section" className="page">
@@ -205,7 +200,7 @@ export default function TranslateSection({
         )}
       </div>
 
-      {/* before / after */}
+      {/* before / after 切替 */}
       <div
         style={{
           marginTop: "10px",
