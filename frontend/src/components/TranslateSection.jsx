@@ -12,9 +12,9 @@ export default function TranslateSection({
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [mode, setMode] = useState("before");
   const [afterText, setAfterText] = useState("");
-
   const [isTranslating, setIsTranslating] = useState(false);
-
+  const [selectedLines, setSelectedLines] = useState([]);
+  
   const toggleSelector = () => {
     setIsSelectorOpen(!isSelectorOpen);
   };
@@ -29,7 +29,7 @@ export default function TranslateSection({
     )
     .join("\n\n") || "";
 
-  // 🔥 スライド切替時 AFTER テキスト更新
+  // AFTER テキスト（スライド切り替え時更新）
   useEffect(() => {
     if (!slides || slides.length === 0) return;
 
@@ -44,9 +44,7 @@ export default function TranslateSection({
     setAfterText(t);
   }, [currentSlideIndex, slides]);
 
-  // --------------------
   // ▼ 翻訳
-  // --------------------
   const handleTranslate = async () => {
     if (!slides || slides.length === 0) return alert("翻訳対象がありません");
 
@@ -62,7 +60,6 @@ export default function TranslateSection({
       const data = await res.json();
       const tSlides = data.translated_text.slides;
 
-      // 翻訳結果を slides に反映
       const newSlides = slides.map((slide, i) => ({
         ...slide,
         shapes: slide.shapes.map((shape, j) => ({
@@ -83,40 +80,44 @@ export default function TranslateSection({
     }
   };
 
-  // --------------------
   // ▼ 保存
-  // --------------------
   const handleSave = async () => {
     if (!slides || slides.length === 0) return alert("保存対象がありません");
-  
-    // ▼ 現在のスライドだけ
+
     const currentSlide = slides[currentSlideIndex];
-  
+
     const payload = {
       selectedFilePath: filepath,
-      slide_index: currentSlideIndex,               // ←バックエンドが必要としている
+      slide_index: currentSlideIndex,
       shapes: currentSlide.shapes.map((s, i) => ({
         shape_index: i,
         text: s.paragraphs?.map(p => p.text).join("\n") || "",
       })),
     };
-  
+
     const res = await fetch("http://127.0.0.1:8000/saveppt", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-  
+
     const data = await res.json();
     console.log(data);
     alert("保存完了");
   };
-  
+
+  // ▼ 部分置換（PySide の replace_btn と同じ役割）
+  const handleReplace = () => {
+    // ここは必要に応じて自由に書き換えてOK
+    // 今は例として "before" → "after" へ置換
+    const newText = afterText.replace(/before/gi, "after");
+    setAfterText(newText);
+  };
 
   return (
     <div id="translate-section" className="page">
 
-      {/* ▼ 翻訳中モーダル */}
+      {/* 翻訳中モーダル */}
       {isTranslating && (
         <div
           style={{
@@ -157,7 +158,6 @@ export default function TranslateSection({
                 animation: "spin 0.8s linear infinite",
               }}
             />
-
             <div style={{ fontSize: "18px", fontWeight: "bold", color: "#333" }}>
               翻訳中…
             </div>
@@ -165,7 +165,7 @@ export default function TranslateSection({
         </div>
       )}
 
-      {/* ▼ スライド一覧 */}
+      {/* スライド一覧 */}
       <div style={{ position: "relative", display: "inline-block" }}>
         <button
           id="slideSelectorBtn"
@@ -263,29 +263,126 @@ export default function TranslateSection({
         />
       )}
 
-      {/* AFTER */}
-      {mode === "after" && (
-        <textarea
-          id="after"
-          className="custom-textarea-after"
-          value={afterText}
-          onChange={(e) => setAfterText(e.target.value)}
-          style={{
-            width: "100%",
-            height: "300px",
-            marginTop: "10px",
-            border: "1px solid #ccc",
-            padding: "8px",
-            boxSizing: "border-box",
-            display: "block",
-            resize: "vertical",
-            backgroundColor: "#fff",
-            fontFamily: "inherit",
-            fontSize: "14px",
-          }}
-          disabled={isTranslating}
-        />
+{mode === "after" && (
+        <div style={{ marginTop: "10px" }}>
+
+          {/* 編集テキスト入力欄 */}
+          <textarea
+            id="after"
+            className="custom-textarea-after"
+            value={afterText}
+            onChange={(e) => setAfterText(e.target.value)}
+            style={{
+              width: "100%",
+              height: "200px",
+              border: "1px solid #ccc",
+              padding: "8px",
+              boxSizing: "border-box",
+              resize: "vertical",
+              backgroundColor: "#fff",
+              fontFamily: "inherit",
+              fontSize: "14px",
+            }}
+            disabled={isTranslating}
+          />
+          
+          {/* -------------------------------------- */}
+          {/* 一括置換ボタン */}
+          <button
+              onClick={() => {
+                  if (selectedLines.length === 0) {
+                      alert("置換対象の行を選択してください。");
+                      return;
+                  }
+
+                  const lines = afterText.split("\n");
+                  
+                  // 選択された行のみを置換する処理
+                  const newText = lines
+                      .map((l, i) =>
+                          selectedLines.includes(i) ? l.replace(/before/gi, "after") : l
+                      )
+                      .join("\n");
+
+                  setAfterText(newText);
+                  // 処理後に選択を解除
+                  setSelectedLines([]);
+              }}
+              disabled={isTranslating || selectedLines.length === 0}
+              style={{
+                  marginTop: "10px",
+                  padding: "8px 15px",
+                  borderRadius: "6px",
+                  background: "#007bff",
+                  color: "white",
+                  border: "none",
+                  cursor: "pointer",
+                  opacity: selectedLines.length === 0 ? 0.6 : 1,
+              }}
+          >
+              選択した {selectedLines.length} 行を一括で "before" → "after" に置換
+          </button>
+          {/* -------------------------------------- */}
+
+          {/* テキスト行ごとの置換リスト */}
+          <div
+            style={{
+              marginTop: "14px",
+              border: "1px solid #ccc",
+              padding: "10px",
+              borderRadius: "6px",
+              background: "#fafafa",
+            }}
+          >
+            {afterText.split("\n").map((line, index) => {
+                // 選択状態の切り替え関数
+                const toggleLineSelection = () => {
+                    if (selectedLines.includes(index)) {
+                        setSelectedLines(selectedLines.filter(i => i !== index));
+                    } else {
+                        setSelectedLines([...selectedLines, index]);
+                    }
+                };
+
+                const isSelected = selectedLines.includes(index);
+
+                return (
+                    <div
+                        key={index}
+                        style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            
+                            background: isSelected ? "#e0f7fa" : "#fff", // 選択された行をハイライト
+                            borderRadius: "4px",
+                            border: "0px solid #ddd",
+                            marginBottom: "0px", // 行間にスペース
+                            padding: "0px 8px",
+                            cursor: "pointer", // クリックできることを示す
+                        }}
+                        onClick={toggleLineSelection} // 行全体をクリックで選択できるように
+                    >
+                        <div style={{ display: "flex", alignItems: "center" }}>
+                            {/* チェックボックス */}
+                            <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={toggleLineSelection} 
+                                style={{ marginRight: "10px" }}
+                            />
+                            <span>{line || "(空行)"}</span>
+                        </div>
+
+                        {/* 元の「+」ボタンは削除しました。必要ならここに戻してください。 */}
+
+                    </div>
+                );
+            })}
+          </div>
+        </div>
       )}
+
 
       {/* 保存 / 翻訳 */}
       <div style={{ textAlign: "right", marginTop: "10px" }}>
