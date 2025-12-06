@@ -8,6 +8,7 @@ import TranslateSection from "./components/TranslateSection";
 import TextareaSection from "./components/TextareaSection";
 import SettingSection from "./components/SettingSection";
 import Modal from "./components/Modal";
+import { TranslateSettingProvider } from "./context/TranslateSettingContext";
 
 
 
@@ -77,6 +78,7 @@ const handleSelectFile = async () => {
   };
 
   return (
+    <TranslateSettingProvider>
     <div>
       <Header
         title={sectionTitles[currentPage]}
@@ -122,5 +124,6 @@ const handleSelectFile = async () => {
       {modalVisible && <Modal closeAndMove={closeModalAndMoveToFile} />}
 
     </div>
+    </TranslateSettingProvider>
   );
 }
