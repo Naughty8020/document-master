@@ -137,7 +137,7 @@ async def load_file():
     path = filedialog.askopenfilename(
         title="ファイルを選択",
         filetypes=[("PowerPoint", "*.pptx"),
-                   ("Word", "*.docx"), ("すべて", "*.*")]
+                   ("Word", "*.docx")]
     )
 
     if not path:
