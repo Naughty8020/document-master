@@ -243,6 +243,39 @@ const handleSaveDocx = async () => {
 };
 
 
+// 保存ボタンを切り替える関数
+const renderSaveButton = () => {
+  if (!filepath) return null;
+
+  const ext = filepath.split('.').pop().toLowerCase();
+
+  if (ext === "ppt" || ext === "pptx") {
+    return (
+      <button
+        id="saveBtn"
+        className="header-save-btn"
+        onClick={handleSave}
+        disabled={isTranslating}
+      >
+        保存
+      </button>
+    );
+  } else if (ext === "docx") {
+    return (
+      <button
+        onClick={handleSaveDocx}
+        disabled={isTranslating}
+      >
+        DOCX 保存
+      </button>
+    );
+  }
+
+  return null;
+};
+
+
+
   return (
     <div id="translate-section" className="page">
   
@@ -421,57 +454,38 @@ const handleSaveDocx = async () => {
         />
       )}
   
-      {/* 保存 / 翻訳 */}
-      <div style={{ textAlign: "right", marginTop: "10px" }}>
-        <button
-          id="saveBtn"
-          className="header-save-btn"
-          onClick={handleSave}
-          style={{ marginRight: "10px" }}
-          disabled={isTranslating}
-        >
-          保存
-        </button>
-  
-        <div style={{ textAlign: "right", marginTop: "10px" }}>
+  <div style={{ textAlign: "right", marginTop: "10px" }}>
+  {renderSaveButton()}
 
-        <button
-  onClick={handleSaveDocx}
-  disabled={isTranslating}
->
-  DOCX 保存
-</button>
+  {translateMode === "all" && (
+    <button
+      id="translateBtn"
+      className="header-save-btn"
+      onClick={handleTranslate}
+      disabled={isTranslating}
+    >
+      {isTranslating ? "翻訳中…" : "全スライド翻訳"}
+    </button>
+  )}
 
+  {translateMode === "selected" && (
+    <button
+      id="translateBtnSelected"
+      className="header-save-btn"
+      onClick={selectedTranslate}
+      disabled={isTranslating}
+    >
+      {isTranslating ? "翻訳中…" : "選択スライド翻訳"}
+    </button>
+  )}
+</div>
 
-{translateMode === "all" && (
-  <button
-    id="translateBtn"
-    className="header-save-btn"
-    onClick={handleTranslate}
-    disabled={isTranslating}
-  >
-    {isTranslating ? "翻訳中…" : "全スライド翻訳"}
-  </button>
-)}
-
-{translateMode === "selected" && (
-  <button
-    id="translateBtnSelected"
-    className="header-save-btn"
-    onClick={selectedTranslate}
-    disabled={isTranslating}
-  >
-    {isTranslating ? "翻訳中…" : "選択スライド翻訳"}
-  </button>
-)}
 
 
 
 </div>
 
-      </div>
-  
-    </div>
+   
   );
   
 }
