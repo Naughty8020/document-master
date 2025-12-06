@@ -194,6 +194,50 @@ export default function TranslateSection({
     }
   };
 
+  // ------------------------
+// DOCX 保存
+// ------------------------
+const handleSaveDocx = async () => {
+  if (!slides || slides.length === 0) return alert("保存対象がありません");
+
+  // afterTexts の最新値をスライド単位で取得
+  const chunks = slides.map((slide, i) => {
+    // afterTexts がある場合はそれを使用
+    const text = afterTexts[i] || slide.shapes
+      .map(shape =>
+        shape.paragraphs.map(p => p.text).join("\n")
+      )
+      .join("\n\n");
+    return text;
+  });
+
+  const payload = {
+    selectedFilePath: filepath,
+    chunks: chunks
+  };
+
+  try {
+    const res = await fetch("http://127.0.0.1:8000/savedocx", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+    console.log("save DOCX result:", data);
+
+    if (data.status === "ok") {
+      alert("DOCX 保存完了");
+    } else {
+      alert("DOCX 保存失敗: " + data.message);
+    }
+  } catch (err) {
+    console.error("DOCX 保存エラー:", err);
+    alert("DOCX 保存に失敗しました");
+  }
+};
+
+
   return (
     <div id="translate-section" className="page">
   
@@ -385,6 +429,14 @@ export default function TranslateSection({
         </button>
   
         <div style={{ textAlign: "right", marginTop: "10px" }}>
+
+        <button
+  onClick={handleSaveDocx}
+  disabled={isTranslating}
+>
+  DOCX 保存
+</button>
+
 
 {translateMode === "all" && (
   <button

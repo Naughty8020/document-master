@@ -131,7 +131,7 @@ def close_all_powerpoint_presentations_mac(save_changes=False):
 async def load_file():
     global prs, filepath
 
-    # tkinterはGUIアプリなので、サーバー環境によっては非推奨です
+    # tkinterはGUIアプリなので、サーバー環境によっては非推奨
     root = tk.Tk()
     root.withdraw()
     path = filedialog.askopenfilename(
@@ -202,37 +202,69 @@ async def load_file():
             slides.append({"index": i, "shapes": slide_shapes})
 
     # ---------------------------------------
-    # DOCX 読み込み（★ 200 文字で分割する新仕様）
+    # DOCX 読み込み（200文字チャンク＋段落分割）
     # ---------------------------------------
     elif ext == ".docx":
         prs = None
         doc = Document(path)
 
-        # 全テキスト結合
-        text_all = "\n".join([p.text for p in doc.paragraphs])
+        # 全段落取得（空段落除外）
+        paragraphs = [p.text.strip() for p in doc.paragraphs if p.text.strip()]
 
-        # 200 文字ごとに分割
-        chunk_size = 200
-        chunks = []
-        for i in range(0, len(text_all), chunk_size):
-            chunks.append(text_all[i:i + chunk_size])
-
-        # PPT と同じ形式で返す
         slides = []
-        for i, chunk in enumerate(chunks):
+        slide_index = 0
+        chunk_size = 200
+        current_chunk_text = ""
+        current_paragraphs = []
+
+        for paragraph in paragraphs:
+            while paragraph:
+                remaining_space = chunk_size - len(current_chunk_text)
+                if len(paragraph) <= remaining_space:
+                    # チャンクに追加
+                    current_paragraphs.append({
+                        "paragraph_index": len(current_paragraphs),
+                        "text": paragraph,
+                        "runs": []
+                    })
+                    current_chunk_text += paragraph
+                    paragraph = ""
+                else:
+                    # チャンクに入りきらない場合、分割
+                    part = paragraph[:remaining_space]
+                    current_paragraphs.append({
+                        "paragraph_index": len(current_paragraphs),
+                        "text": part,
+                        "runs": []
+                    })
+                    current_chunk_text += part
+                    paragraph = paragraph[remaining_space:]
+
+                # チャンクがいっぱいになったらスライド化
+                if len(current_chunk_text) >= chunk_size:
+                    slides.append({
+                        "index": slide_index,
+                        "shapes": [
+                            {
+                                "shape_index": 0,
+                                "text": current_chunk_text,
+                                "paragraphs": current_paragraphs
+                            }
+                        ]
+                    })
+                    slide_index += 1
+                    current_chunk_text = ""
+                    current_paragraphs = []
+
+        # 残りがあれば最後のスライドに追加
+        if current_chunk_text:
             slides.append({
-                "index": i,
+                "index": slide_index,
                 "shapes": [
                     {
                         "shape_index": 0,
-                        "text": chunk,
-                        "paragraphs": [
-                            {
-                                "paragraph_index": 0,
-                                "text": chunk,
-                                "runs": []
-                            }
-                        ]
+                        "text": current_chunk_text,
+                        "paragraphs": current_paragraphs
                     }
                 ]
             })
@@ -401,6 +433,55 @@ def test_endpoint(payload: dict = Body(...)):
         slides_info.append({"slide_index": slide_index, "shapes": shapes_info})
 
     return {"status": "ok", "slides": slides_info}
+
+
+@app.post("/savedocx")
+def save_docx_endpoint(payload: dict = Body(...)):
+    """
+    DOCXのチャンク翻訳結果を上書き保存するエンドポイント。
+    payload = {
+        "selectedFilePath": "xxx.docx",
+        "chunks": [ "翻訳後テキスト…", "翻訳後テキスト…", ... ]
+    }
+    """
+    selectedFilePath = payload.get("selectedFilePath")
+    chunks = payload.get("chunks")
+
+    if not selectedFilePath:
+        return {"status": "error", "message": "File path missing"}
+
+    if chunks is None:
+        return {"status": "error", "message": "No translated chunks provided"}
+
+    # ---- 元ファイル読み込み ----
+    try:
+        doc = Document(selectedFilePath)
+    except Exception as e:
+        return {"status": "error", "message": f"Cannot open DOCX: {str(e)}"}
+
+    # ---- 翻訳済みチャンク → 1本のテキストに結合（改行そのまま）----
+    merged_text = "\n".join(chunks)
+
+    # ---- DOCX の段落を全て削除 ----
+    for _ in range(len(doc.paragraphs)):
+        p = doc.paragraphs[0]
+        p._element.getparent().remove(p._element)
+
+    # ---- 新しい段落として書き込み（改行保持）----
+    for line in merged_text.split("\n"):
+        p = doc.add_paragraph()
+        p.add_run(line)
+
+    # ---- 上書き保存 ----
+    try:
+        doc.save(selectedFilePath)
+    except Exception as e:
+        return {"status": "error", "message": f"Failed to save DOCX: {str(e)}"}
+
+    return {
+        "status": "ok",
+        "saved_path": selectedFilePath
+    }
 
 
 @app.post("/savetest")
