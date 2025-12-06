@@ -366,8 +366,8 @@ const renderSaveButton = () => {
       {/* before / after 切替 */}
       <div
         style={{
-          marginTop: "10px",
-          marginBottom: "5px",
+          marginTop: "0px",
+          marginBottom: "2px",
           display: "flex",
           justifyContent: "flex-end",
           alignItems: "center",
@@ -377,7 +377,7 @@ const renderSaveButton = () => {
         <button
           onClick={() => setMode("before")}
           style={{
-            color: mode === "before" ? "red" : "#444",
+            color: mode === "before" ? "blue" : "#444",
             cursor: "pointer",
             background: "transparent",
             border: "none",
@@ -392,7 +392,7 @@ const renderSaveButton = () => {
         <button
           onClick={() => setMode("after")}
           style={{
-            color: mode === "after" ? "blue" : "#444",
+            color: mode === "after" ? "red" : "#444",
             cursor: "pointer",
             background: "transparent",
             border: "none",
@@ -413,7 +413,7 @@ const renderSaveButton = () => {
           style={{
             width: "100%",
             height: "300px",
-            marginTop: "10px",
+            marginTop: "2px",
             border: "1px solid #ccc",
             padding: "8px",
             boxSizing: "border-box",
@@ -440,7 +440,7 @@ const renderSaveButton = () => {
           style={{
             width: "100%",
             height: "300px",
-            marginTop: "10px",
+            marginTop: "2px",
             border: "1px solid #ccc",
             padding: "8px",
             boxSizing: "border-box",

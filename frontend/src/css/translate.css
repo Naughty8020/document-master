@@ -11,6 +11,10 @@
   z-index: 50;
 }
 
+#slideSelectorBtn{
+  color: black;
+}
+
 @keyframes spin {
   from {
     transform: rotate(0deg);

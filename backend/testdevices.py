@@ -2,6 +2,7 @@ from transformers import AutoTokenizer
 from optimum.intel import OVModelForSeq2SeqLM
 import re
 
+
 class TranslatorModel:
     def __init__(self, model_dir="openvino_model", src_lang="ja_XX", tgt_lang="en_XX"):
 
@@ -26,12 +27,17 @@ class TranslatorModel:
             return ""
 
         text = re.sub(r'\n{2,}', '\n', text.strip())
-        inputs = self.tokenizer(text, return_tensors="pt", truncation=True, max_length=256)
+        inputs = self.tokenizer(text, return_tensors="pt",
+                                truncation=True, max_length=256)
 
         outputs = self.model.generate(
             **inputs,
             max_length=256,
-            forced_bos_token_id=self.forced_bos_token_id
+            forced_bos_token_id=self.forced_bos_token_id,
+
+            do_sample=True,          # ★ サンプリングを有効にする
+            temperature=0.4,         # ★ ランダム性を制御 (0.7は適度な多様性)
+            top_k=50,
         )
 
         return self.tokenizer.decode(outputs[0], skip_special_tokens=True)

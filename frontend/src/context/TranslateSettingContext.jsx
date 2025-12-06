@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState } from "react";
 const TranslateSettingContext = createContext();
 
 export function TranslateSettingProvider({ children }) {
-  const [translateMode, setTranslateMode] = useState("all"); 
+  const [translateMode, setTranslateMode] = useState("selected"); 
   // "all" = 全部翻訳, "selected" = 選択スライドのみ翻訳
 
   return (
