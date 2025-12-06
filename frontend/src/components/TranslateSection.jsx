@@ -200,14 +200,19 @@ export default function TranslateSection({
 const handleSaveDocx = async () => {
   if (!slides || slides.length === 0) return alert("保存対象がありません");
 
-  // afterTexts の最新値をスライド単位で取得
+  // 保存するチャンクだけを作成
   const chunks = slides.map((slide, i) => {
-    // afterTexts がある場合はそれを使用
-    const text = afterTexts[i] || slide.shapes
-      .map(shape =>
-        shape.paragraphs.map(p => p.text).join("\n")
-      )
-      .join("\n\n");
+    // afterTexts に翻訳済みテキストがある場合はそれを使い、なければ元のテキスト
+    const text = afterTexts[i] !== undefined
+      ? afterTexts[i]  // 更新されたチャンクのみ反映
+      : slide.shapes
+          .map(shape =>
+            shape.paragraphs
+              .map(p => p.text)
+              .filter(Boolean)
+              .join("\n")
+          )
+          .join("\n\n");
     return text;
   });
 
