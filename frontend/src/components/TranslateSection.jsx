@@ -377,7 +377,7 @@ const renderSaveButton = () => {
         <button
           onClick={() => setMode("before")}
           style={{
-            color: mode === "before" ? "blue" : "#444",
+            color: mode === "before" ? "red" : "#444",
             cursor: "pointer",
             background: "transparent",
             border: "none",
@@ -392,7 +392,7 @@ const renderSaveButton = () => {
         <button
           onClick={() => setMode("after")}
           style={{
-            color: mode === "after" ? "red" : "#444",
+            color: mode === "after" ? "rad" : "#444",
             cursor: "pointer",
             background: "transparent",
             border: "none",

@@ -122,6 +122,12 @@ def close_all_powerpoint_presentations_mac(save_changes=False):
         # osascriptが見つからないのは通常ありえませんが、念のため
         print("🚨 'osascript' コマンドが見つかりません。")
 
+
+@app.get("/wait")
+def wait():
+    time.sleep(3)  # ← 3秒待つ
+    return {"status": "ok", "message": "API response arrived!"}
+
 # ----------------------------------------------------
 # /get_file
 # ----------------------------------------------------
@@ -667,6 +673,40 @@ def insert_slide(data: TextData):
     return {"status": "ok", "message": "新しいスライドを追加しました。"}
 
 
+class TextData(BaseModel):
+    text: str
+
+
+# DOCX ファイルパス（例: input.docx）
+docx_filepath = filepath
+
+
+@app.post("/insert-docx")
+def insert_docx(data: TextData):
+    try:
+        # ファイルが存在しない場合は新規作成
+        if os.path.exists(docx_filepath):
+            doc = Document(docx_filepath)
+            print(f"ファイル '{docx_filepath}' を開きました。")
+        else:
+            doc = Document()
+            print(f"ファイル '{docx_filepath}' が見つからないため新規作成しました。")
+
+        # 新しい段落としてテキストを追加
+        doc.add_paragraph(data.text)
+        print(f"テキストを追加しました: {data.text}")
+
+        # 保存
+        doc.save(docx_filepath)
+        print(f"ファイル '{docx_filepath}' に保存しました。")
+
+    except Exception as e:
+        print("error:", e)
+        return {"status": "error", "message": f"DOCXへの挿入中にエラーが発生しました: {e}"}
+
+    return {"status": "ok", "message": "DOCXにテキストを追加しました。"}
+
+
 class TranslateOnly(BaseModel):
     text: str
 
@@ -685,6 +725,38 @@ def insert_and_translate(data: TranslateOnly):
     except Exception as e:
         print("error:", e)
         return {"status": "error", "message": "翻訳失敗"}
+
+
+class TranslateOnly(BaseModel):
+    text: str
+
+# ---------------------
+# 🔵 DOCX翻訳専用エンドポイント
+# ---------------------
+
+
+# @app.post("/insert-translate-docx")
+# def insert_and_translate_docx(data: TranslateOnly):
+#     try:
+#         # ① 翻訳
+#         translated_text = TRANS_MODEL.translate_text(data.text)
+
+#         # ② DOCXに書き込む場合のサンプル（任意）
+#         # doc = Document()
+#         # doc.add_paragraph(translated_text)
+#         # buffer = io.BytesIO()
+#         # doc.save(buffer)
+#         # buffer.seek(0)
+
+#         return {
+#             "status": "ok",
+#             "translated_text": translated_text
+#             # "docx_file": buffer.getvalue()  # 必要に応じてバイト配列を返せる
+#         }
+
+#     except Exception as e:
+#         print("error:", e)
+#         return {"status": "error", "message": "翻訳失敗"}
 
 
 # class ShapeItem(BaseModel):

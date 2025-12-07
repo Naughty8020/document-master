@@ -115,6 +115,7 @@ const handleSelectFile = async () => {
          textAreaRefBefore={textAreaRef}
          textAreaRefAfter={afterTextAreaRef}
          pptxPosition={pptxPosition}
+         filename={selectedFileName}
          setPptxPosition={setPptxPosition}
          onInsert={() => console.log("挿入ボタン押下")}
         />
