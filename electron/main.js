@@ -14,6 +14,7 @@ function createWindows() {
     frame: false,
     alwaysOnTop: true,
     transparent: true,
+    center: true,
   });
 
   splashWindow.loadFile(path.join(__dirname, 'splash.html'));
@@ -24,10 +25,12 @@ function createWindows() {
     height: 600,
     show: false,
     icon: path.join(__dirname, 'assets/logo.png'),
+    center: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
     },
   });
+  
 
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173');
