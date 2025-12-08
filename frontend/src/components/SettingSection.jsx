@@ -3,17 +3,17 @@ import { useTranslateSetting } from "../context/TranslateSettingContext";
 
 export default function SettingSection() {
   const [model, setModel] = useState("gpt-4");
-  const [language, setLanguage] = useState("ja");
   const [hardware, setHardware] = useState("cpu");
   const [saved, setSaved] = useState(false);
   const [hover, setHover] = useState(false);
-
-  const { translateMode, setTranslateMode } = useTranslateSetting();
+  const { translateMode, setTranslateMode, language, setLanguage } = useTranslateSetting();
 
   const handleSave = () => {
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
+
+  console.log(language)
 
   return (
     <div
@@ -126,8 +126,6 @@ export default function SettingSection() {
     >
       <option value="ja">日本語</option>
       <option value="en">English</option>
-      <option value="zh">中文</option>
-      <option value="ko">한국어</option>
     </select>
   </div>
 

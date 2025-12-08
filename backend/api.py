@@ -325,12 +325,37 @@ async def api_translate_text(data: SlidesToTranslate):
         for shape in slide.shapes:
             t_paragraphs = []
             for p in shape.paragraphs:
-                translated_text = TRANS_MODEL.translate_text(p.text)
+                # デフォルトは日本語→英語
+                translated_text = TRANS_MODEL.translate_text(
+                    p.text, src_lang="ja_XX", tgt_lang="en_XX")
                 t_paragraphs.append({"text": translated_text})
             t_shapes.append({"paragraphs": t_paragraphs})
         translated_slides.append({"shapes": t_shapes})
 
     return {"status": "ok", "translated_text": {"slides": translated_slides}}
+
+
+@app.post("/translate-ja")
+async def api_translate_ja(data: SlidesToTranslate):
+    if TRANS_MODEL is None:
+        return {"error": "翻訳モデルがロードされていません", "translated_text": data.dict()}
+
+    translated_slides = []
+
+    for slide in data.slides:
+        t_shapes = []
+        for shape in slide.shapes:
+            t_paragraphs = []
+            for p in shape.paragraphs:
+                # こちらは英語→日本語
+                translated_text = TRANS_MODEL.translate_text(
+                    p.text, src_lang="en_XX", tgt_lang="ja_XX")
+                t_paragraphs.append({"text": translated_text})
+            t_shapes.append({"paragraphs": t_paragraphs})
+        translated_slides.append({"shapes": t_shapes})
+
+    return {"status": "ok", "translated_text": {"slides": translated_slides}}
+
 
 # from fastapi import FastAPI
 # from pydantic import BaseModel
