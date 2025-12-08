@@ -104,6 +104,14 @@ const handleInsertUnified = async () => {
             className="translate-textarea"
             placeholder="ここに翻訳したいテキスト入力"
           />
+
+<div className="line-preview-box">
+        {/* <ul>
+          {lines.map((line, i) => (
+            <li key={i}>{line}</li>
+          ))}
+        </ul> */}
+      </div>
           <div style={{ marginTop: "15px", textAlign: "right" }}>
             <button className="translate-insert" onClick={handleTranslate}>
               翻訳する

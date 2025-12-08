@@ -140,6 +140,7 @@ async def load_file():
     # tkinterはGUIアプリなので、サーバー環境によっては非推奨
     root = tk.Tk()
     root.withdraw()
+
     path = filedialog.askopenfilename(
         title="ファイルを選択",
         filetypes=[("PowerPoint", "*.pptx"),
@@ -309,60 +310,33 @@ class Slide(BaseModel):
     shapes: List[Shape]
 
 
-class SlidesToTranslate(BaseModel):
-    slides: List[Slide]
+class TextsToTranslate(BaseModel):
+    texts: List[str]
     language: str
 
 
-@app.post("/translate_text")
-async def api_translate_text(data: SlidesToTranslate):
+@app.post("/translate_texts")
+async def api_translate_texts(data:    TextsToTranslate):
     if TRANS_MODEL is None:
-        return {"error": "翻訳モデルがロードされていません", "translated_text": data.dict()}
+        return {"error": "翻訳モデルがロードされていません", "translated_texts": []}
 
     tgt_lang = "ja_XX" if data.language == "ja" else "en_XX"
     src_lang = "en_XX" if tgt_lang == "ja_XX" else "ja_XX"
 
-    translated_slides = []
+    translated_texts = []
 
-    for slide in data.slides:
-        t_shapes = []
-        for shape in slide.shapes:
-            t_paragraphs = []
-            for p in shape.paragraphs:
-                # デフォルトは日本語→英語
-                translated_text = TRANS_MODEL.translate_text(
-                    p.text,
-                    src_lang=src_lang,
-                    tgt_lang=tgt_lang
-                )
+    for text in data.texts:
+        print("Translating text:", text)
+        # 翻訳する
+        translated_text = TRANS_MODEL.translate_text(
+            text,
+            src_lang=src_lang,
+            tgt_lang=tgt_lang
+        )
+        translated_texts.append(translated_text)
 
-                t_paragraphs.append({"text": translated_text})
-            t_shapes.append({"paragraphs": t_paragraphs})
-        translated_slides.append({"shapes": t_shapes})
-
-    return {"status": "ok", "translated_text": {"slides": translated_slides}}
-
-
-@app.post("/translate-ja")
-async def api_translate_ja(data: SlidesToTranslate):
-    if TRANS_MODEL is None:
-        return {"error": "翻訳モデルがロードされていません", "translated_text": data.dict()}
-
-    translated_slides = []
-
-    for slide in data.slides:
-        t_shapes = []
-        for shape in slide.shapes:
-            t_paragraphs = []
-            for p in shape.paragraphs:
-                # こちらは英語→日本語
-                translated_text = TRANS_MODEL.translate_text(
-                    p.text, src_lang="en_XX", tgt_lang="ja_XX")
-                t_paragraphs.append({"text": translated_text})
-            t_shapes.append({"paragraphs": t_paragraphs})
-        translated_slides.append({"shapes": t_shapes})
-
-    return {"status": "ok", "translated_text": {"slides": translated_slides}}
+    # 翻訳されたテキストのリストを返す
+    return {"status": "ok", "translated_texts": translated_texts}
 
 
 # from fastapi import FastAPI

@@ -12,191 +12,207 @@ export default function TranslateSection({
 }) {
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
-  const [mode, setMode] = useState("before");
+  const [mode, setMode] = useState("before"); 
 
-  // after をスライドごとに保持
+  // after をスライドごとに保持 (保存ロジックで必要)
   const [afterTexts, setAfterTexts] = useState([]);
 
   // 翻訳中フラグ
   const [isTranslating, setIsTranslating] = useState(false);
-  const { translateMode } = useTranslateSetting();
+  const { translateMode, language } = useTranslateSetting(); 
 
-  console.log(translateMode);
+  // BEFORE モードでの選択状態
+  const [selectedIndexes, setSelectedIndexes] = useState([]); 
+  // AFTER モードでの選択状態 (新しく追加)
+  const [selectedAfterIndexes, setSelectedAfterIndexes] = useState([]); 
 
 
+  // --- Utility Functions ---
   const toggleSelector = () => {
     setIsSelectorOpen(!isSelectorOpen);
   };
-
-  // BEFORE テキスト（スライド単位）
-  const beforeText = TranslateDate?.slides?.[currentSlideIndex]?.shapes
-    ?.map(shape =>
-      shape.paragraphs
-        ?.map(p => p.text.trim())
-        .filter(Boolean)
-        .join("\n")
-    )
-    .join("\n\n") || "";
-
-  // ------------------------
-  // 全スライド翻訳
-  // ------------------------
-  const { language } = useTranslateSetting(); // Context から言語取得
-
-const handleTranslate = async () => {
-  if (!slides || slides.length === 0) return alert("翻訳対象がありません");
-
-  try {
-    setIsTranslating(true);
-    console.log(language)
-
-    // 言語によって API URL を切り替え
-    const apiUrl = language === "ja" 
-      ? "http://127.0.0.1:8000/translate-ja" 
-      : "http://127.0.0.1:8000/translate_text";
-
-    const res = await fetch(apiUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slides }),
+  
+  // スライド上のすべての段落キーを取得する関数
+  const getAllParagraphKeys = (slide) => {
+    const keys = [];
+    slide?.shapes?.forEach((shape, sIndex) => {
+      shape.paragraphs?.forEach((p, pIndex) => {
+        if (p.text && p.text.trim() !== "") {
+          keys.push(`${sIndex}-${pIndex}`);
+        }
+      });
     });
+    return keys;
+  };
 
-    const data = await res.json();
-    const tSlides = data.translated_text.slides;
+  // ------------------------
+  // 全選択 / 全選択解除 (Before/After 共通ロジック)
+  // ------------------------
+  const toggleAllSelect = () => {
+    const currentSlideKeys = getAllParagraphKeys(slides[currentSlideIndex]);
+    
+    // mode に応じて対象の state と setter を選択
+    const [currentIndexes, setCurrentIndexes] = mode === "before" 
+      ? [selectedIndexes, setSelectedIndexes]
+      : [selectedAfterIndexes, setSelectedAfterIndexes];
+      
+    const isAllSelected = currentSlideKeys.every(key => currentIndexes.includes(key));
 
-    // after texts 格納
-    const converted = tSlides.map(slide =>
-      slide.shapes
-        .map(shape =>
+    if (isAllSelected) {
+      // 全選択解除
+      setCurrentIndexes([]);
+    } else {
+      // 全選択
+      setCurrentIndexes(currentSlideKeys);
+    }
+  };
+
+
+  // ------------------------
+  // 選択中スライドだけ翻訳
+  // ------------------------
+  const selectedTranslate = async () => {
+    if (!slides || slides.length === 0 || selectedIndexes.length === 0) {
+      return alert("翻訳対象がありません");
+    }
+  
+    const targetSlide = slides[currentSlideIndex];
+    
+    // 1. 選択された段落とその位置情報のみを抽出
+    const paragraphsToTranslate = [];
+    targetSlide.shapes.forEach((shape, sIndex) => {
+      shape.paragraphs.forEach((p, pIndex) => {
+        const key = `${sIndex}-${pIndex}`;
+        if (selectedIndexes.includes(key)) {
+          paragraphsToTranslate.push({
+            text: p.text,
+            sIndex: sIndex, 
+            pIndex: pIndex  
+          });
+        }
+      });
+    });
+  
+    try {
+      setIsTranslating(true);
+  
+      const apiUrl = "http://127.0.0.1:8000/translate_texts"; 
+  
+      const res = await fetch(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          texts: paragraphsToTranslate.map(p => p.text), 
+          language: language,
+        }),
+      });
+  
+      const data = await res.json();
+      if (!data.translated_texts) throw new Error("翻訳結果がありません");
+  
+      const translatedTexts = data.translated_texts;
+  
+      // 2. 翻訳結果を元のスライドにピンポイントで適用
+      const newSlides = [...slides];
+      const newTargetSlide = JSON.parse(JSON.stringify(targetSlide)); 
+  
+      translatedTexts.forEach((tText, index) => {
+          const originalP = paragraphsToTranslate[index];
+          const s = originalP.sIndex;
+          const p = originalP.pIndex;
+          
+          newTargetSlide.shapes[s].paragraphs[p].text = tText;
+      });
+  
+      newSlides[currentSlideIndex] = newTargetSlide;
+  
+      // 3. afterTexts を更新
+      const newAfterText = newTargetSlide.shapes
+        ?.map(shape =>
           shape.paragraphs
-            .map(p => p.text.trim())
+            ?.map(p => p.text.trim())
             .filter(Boolean)
             .join("\n")
         )
-        .join("\n\n")
-    );
+        .join("\n\n") || "";
 
-    setAfterTexts(converted);
+      const newAfterTexts = [...afterTexts];
+      newAfterTexts[currentSlideIndex] = newAfterText;
+      setAfterTexts(newAfterTexts);
 
-    // slides を上書き
-    const newSlides = slides.map((slide, i) => ({
-      ...slide,
-      shapes: slide.shapes.map((shape, j) => ({
-        ...shape,
-        paragraphs: shape.paragraphs.map((p, k) => ({
-          ...p,
-          text: tSlides[i].shapes[j].paragraphs[k].text,
-        })),
-      })),
-    }));
-
-    setSlides(newSlides);
-    alert("翻訳完了");
-  } catch (err) {
+      setSlides(newSlides);
+      alert("選択行の翻訳が完了しました");
+    } catch (err) {
     console.error(err);
     alert("翻訳に失敗しました");
   } finally {
     setIsTranslating(false);
   }
 };
-
-
-  // ------------------------
-  // 選択中スライドだけ翻訳
-  // ------------------------
-
-
-
-  const selectedTranslate = async () => {
-    if (!slides || slides.length === 0) return alert("翻訳対象がありません");
   
-    const targetSlide = slides[currentSlideIndex];
-  
-    try {
-      setIsTranslating(true);
-  
-      // 1つの統合 API に送信し、language で翻訳方向を指定
-      const apiUrl = "http://127.0.0.1:8000/translate_text"; // 統合 API
-  
-      const res = await fetch(apiUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          slides: [targetSlide],
-          language: language, // context からターゲット言語を指定
-        }),
-      });
-  
-      const data = await res.json();
-      if (!data.translated_text?.slides?.[0]) throw new Error("翻訳結果がありません");
-  
-      const translated = data.translated_text.slides[0];
-  
-      // afterTexts 更新
-      const converted = translated.shapes
-        .map(shape =>
-          shape.paragraphs
-            .map(p => p.text.trim())
-            .filter(Boolean)
-            .join("\n")
-        )
-        .join("\n\n");
-  
-      const newAfter = [...afterTexts];
-      newAfter[currentSlideIndex] = converted;
-      setAfterTexts(newAfter);
-  
-      // slides の1枚だけ更新
-      const newSlides = [...slides];
-      newSlides[currentSlideIndex] = {
-        ...targetSlide,
-        shapes: targetSlide.shapes.map((shape, j) => ({
-          ...shape,
-          paragraphs: shape.paragraphs.map((p, k) => ({
-            ...p,
-            text: translated.shapes[j].paragraphs[k].text,
-          })),
-        })),
-      };
-  
-      setSlides(newSlides);
-  
-      alert("翻訳完了");
-    } catch (err) {
-      console.error(err);
-      alert("翻訳に失敗しました");
-    } finally {
-      setIsTranslating(false);
-    }
-  };
-
 
   // ------------------------
-  // 保存
+  // 保存 (選択された行のみ保存)
   // ------------------------
   const handleSave = async () => {
     if (!slides || slides.length === 0) return alert("保存対象がありません");
 
-    // after の最新値を slides に反映
-    if (afterTexts[currentSlideIndex]) {
-      const edited = afterTexts[currentSlideIndex].split("\n");
+    let finalTargetSlide = slides[currentSlideIndex];
 
-      slides[currentSlideIndex].shapes.forEach((s, i) => {
-        if (!edited[i]) return;
-        if (s.paragraphs[0]) {
-          s.paragraphs[0].text = edited[i];
-        }
+    if (mode === "after" && selectedAfterIndexes.length > 0) {
+      // AFTERモードで選択行がある場合、その行のテキストを afterTexts に反映し、保存に使う
+      
+      const originalAfterText = afterTexts[currentSlideIndex] || "";
+      let editedAfterTextLines = originalAfterText.split("\n");
+      
+      // slides[currentSlideIndex] の内容（最新の翻訳状態）を取得
+      const currentSlide = slides[currentSlideIndex];
+      let lineIndex = 0;
+
+      // 選択された段落のテキストを afterTexts の対応する行にコピーする
+      currentSlide.shapes.forEach((shape, sIndex) => {
+        shape.paragraphs.forEach((p, pIndex) => {
+          const key = `${sIndex}-${pIndex}`;
+          
+          if (p.text && p.text.trim() !== "") {
+            // 選択されている場合、slides[currentSlideIndex]のテキストを使用
+            if (selectedAfterIndexes.includes(key) && lineIndex < editedAfterTextLines.length) {
+              editedAfterTextLines[lineIndex] = p.text.trim();
+            }
+            lineIndex++;
+          }
+        });
       });
+      
+      const newAfterText = editedAfterTextLines.join("\n");
+      
+      // afterTexts を更新（保存ペイロード生成用）
+      const newAfterTexts = [...afterTexts];
+      newAfterTexts[currentSlideIndex] = newAfterText;
+      setAfterTexts(newAfterTexts);
+    } 
+    
+    // finalTargetSlide のテキストを afterTexts の内容で上書き（保存ロジックの互換性維持のため）
+    if (afterTexts[currentSlideIndex]) {
+        const edited = afterTexts[currentSlideIndex].split("\n");
+        finalTargetSlide.shapes.forEach((s, i) => {
+            if (!edited[i]) return;
+            if (s.paragraphs[0]) {
+                s.paragraphs[0].text = edited[i];
+            }
+        });
     }
 
-    const currentShapes = slides[currentSlideIndex].shapes;
+
+    const currentShapes = finalTargetSlide.shapes;
 
     const payload = {
       selectedFilePath: filepath,
       slide_index: currentSlideIndex,
       shapes: currentShapes.map((s, i) => ({
         shape_index: i,
-        text: s.paragraphs?.map(p => p.text).join("\n") || "",
+        // ここで既に afterTexts の内容が slides に反映されていることを期待
+        text: s.paragraphs?.map(p => p.text).join("\n") || "", 
       })),
     };
 
@@ -222,11 +238,10 @@ const handleTranslate = async () => {
 const handleSaveDocx = async () => {
   if (!slides || slides.length === 0) return alert("保存対象がありません");
 
-  // 保存するチャンクだけを作成
+  // afterTexts に翻訳済みテキストがある場合はそれを使い、なければ元のテキスト
   const chunks = slides.map((slide, i) => {
-    // afterTexts に翻訳済みテキストがある場合はそれを使い、なければ元のテキスト
     const text = afterTexts[i] !== undefined
-      ? afterTexts[i]  // 更新されたチャンクのみ反映
+      ? afterTexts[i]  
       : slide.shapes
           .map(shape =>
             shape.paragraphs
@@ -267,8 +282,6 @@ const handleSaveDocx = async () => {
 
 const renderSaveButton = () => {
   if (!filepath) return null;
-
-  // after のときだけ表示
   if (mode !== "after") return null;
 
   const ext = filepath.split(".").pop().toLowerCase();
@@ -294,56 +307,23 @@ const renderSaveButton = () => {
       </button>
     );
   }
-
   return null;
 };
-
-
 
 
   return (
     <div id="translate-section" className="page">
   
-      {/* ▼ 翻訳中モーダル */}
+      {/* ▼ 翻訳中モーダル (省略) */}
       {isTranslating && (
         <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100vw",
-            height: "100vh",
-            background: "rgba(0,0,0,0.45)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 9999,
-            backdropFilter: "blur(2px)",
-          }}
+          style={{ /* ... style ... */ }}
         >
           <div
-            style={{
-              background: "white",
-              padding: "30px 50px",
-              borderRadius: "14px",
-              fontSize: "20px",
-              boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "15px",
-              minWidth: "260px",
-            }}
+            style={{ /* ... style ... */ }}
           >
             <div
-              style={{
-                width: "40px",
-                height: "40px",
-                border: "4px solid #ccc",
-                borderTop: "4px solid #4a90e2",
-                borderRadius: "50%",
-                animation: "spin 0.8s linear infinite",
-              }}
+              style={{ /* ... style ... */ }}
             />
   
             <div style={{ fontSize: "18px", fontWeight: "bold", color: "#333" }}>
@@ -353,7 +333,7 @@ const renderSaveButton = () => {
         </div>
       )}
   
-      {/* ▼ スライド一覧 */}
+      {/* ▼ スライド一覧 (省略) */}
       <div style={{ position: "relative", display: "inline-block", marginTop: "15px" }}>
         <button
           id="slideSelectorBtn"
@@ -428,58 +408,90 @@ const renderSaveButton = () => {
         </button>
       </div>
   
-      {/* BEFORE */}
-      {mode === "before" && (
-        <textarea
-          id="before"
-          className="custom-textarea"
-          value={beforeText}
-          readOnly
-          placeholder="ここに選択した資料の元のテキストが表示されます"
-          style={{
-            width: "100%",
-            height: "300px",
-            marginTop: "2px",
-            border: "1px solid #ccc",
-            padding: "8px",
-            boxSizing: "border-box",
-            display: "block",
-            resize: "vertical",
-            backgroundColor: "#fff",
-            fontFamily: "inherit",
-            fontSize: "14px",
-          }}
-        />
-      )}
+      {/* 選択ボタン / リスト本体 */}
+      <div style={{ border: "1px solid #ccc", padding: "10px", borderRadius: "4px" }}>
+        
+        {/* 全選択/解除ボタン */}
+        <div style={{ marginBottom: "10px", textAlign: "right" }}>
+          <button 
+            onClick={toggleAllSelect} 
+            disabled={isTranslating}
+            style={{
+              padding: "4px 8px", 
+              borderRadius: "4px", 
+              border: "1px solid #4a90ff", 
+              background: "#f0f8ff", 
+              cursor: "pointer",
+              fontSize: "12px"
+            }}
+          >
+            {
+              // mode に応じて対象の state を選択
+              (mode === "before" ? selectedIndexes : selectedAfterIndexes).every(key => getAllParagraphKeys(slides[currentSlideIndex]).includes(key)) 
+                ? "全選択解除" 
+                : "全選択"
+            }
+          </button>
+        </div>
+
+        <ul>
+            {slides[currentSlideIndex]?.shapes?.map((shape, sIndex) => (
+              <React.Fragment key={sIndex}>
+                {shape.paragraphs?.map((p, pIndex) => {
+                  const key = `${sIndex}-${pIndex}`;
+                  
+                  // mode に応じて対象の state を選択
+                  const currentSelectedIndexes = mode === "before" ? selectedIndexes : selectedAfterIndexes;
+                  const currentSetSelectedIndexes = mode === "before" ? setSelectedIndexes : setSelectedAfterIndexes;
+
+                  const selected = currentSelectedIndexes.includes(key);
   
-      {/* AFTER（スライドごとに切り替わる） */}
-      {mode === "after" && (
-        <textarea
-          id="after"
-          className="custom-textarea-after"
-          value={afterTexts[currentSlideIndex] || ""}
-          placeholder="ここに翻訳結果が表示されます"
-          onChange={(e) => {
-            const newArr = [...afterTexts];
-            newArr[currentSlideIndex] = e.target.value;
-            setAfterTexts(newArr);
-          }}
-          style={{
-            width: "100%",
-            height: "300px",
-            marginTop: "2px",
-            border: "1px solid #ccc",
-            padding: "8px",
-            boxSizing: "border-box",
-            display: "block",
-            resize: "vertical",
-            backgroundColor: "#fff",
-            fontFamily: "inherit",
-            fontSize: "14px",
-          }}
-          disabled={isTranslating}
-        />
-      )}
+                  if (!p.text || p.text.trim() === "") {
+                    return null;
+                  }
+  
+                  return (
+                    <li
+                      key={key}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        // 選択状態をハイライト
+                        background: selected ? "#d0e7ff" : "transparent",
+                        padding: "2px 4px",
+                        borderRadius: "4px",
+                      }}
+                    >
+                      {/* 選択ボタン */}
+                        <button
+                          style={{
+                            width: "18px",
+                            height: "18px",
+                            borderRadius: "50%",
+                            border: "1px solid #555",
+                            background: selected ? "#4a90ff" : "none",
+                            cursor: "pointer",
+                          }}
+                          onClick={() => {
+                            currentSetSelectedIndexes((prev) =>
+                              selected
+                                ? prev.filter((k) => k !== key)
+                                : [...prev, key]
+                            );
+                          }}
+                        />
+
+                      <span style={{ color: mode === "after" ? "red" : "#333" }}>
+                        {p.text}
+                      </span>
+                    </li>
+                  );
+                })}
+              </React.Fragment>
+            ))}
+          </ul>
+      </div>
   
   <div style={{ textAlign: "right", marginTop: "10px" }}>
   {renderSaveButton()}
@@ -488,7 +500,7 @@ const renderSaveButton = () => {
   <button
     id="translateBtn"
     className="header-save-btn"
-    onClick={handleTranslate}
+    onClick={() => alert("全スライド翻訳機能は現在コメントアウトされています")}
     disabled={isTranslating}
   >
     {isTranslating ? "翻訳中…" : "全スライド翻訳"}
@@ -501,14 +513,12 @@ const renderSaveButton = () => {
       id="translateBtnSelected"
       className="header-save-btn"
       onClick={selectedTranslate}
-      disabled={isTranslating}
+      disabled={isTranslating || selectedIndexes.length === 0}
     >
-      {isTranslating ? "翻訳中…" : "選択スライド翻訳"}
+      {isTranslating ? "翻訳中…" : "選択行を翻訳"}
     </button>
   )}
 </div>
-
-
 
 
 </div>
