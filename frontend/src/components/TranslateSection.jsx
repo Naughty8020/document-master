@@ -435,6 +435,7 @@ const renderSaveButton = () => {
           className="custom-textarea"
           value={beforeText}
           readOnly
+          placeholder="ここに選択した資料の元のテキストが表示されます"
           style={{
             width: "100%",
             height: "300px",
@@ -457,6 +458,7 @@ const renderSaveButton = () => {
           id="after"
           className="custom-textarea-after"
           value={afterTexts[currentSlideIndex] || ""}
+          placeholder="ここに翻訳結果が表示されます"
           onChange={(e) => {
             const newArr = [...afterTexts];
             newArr[currentSlideIndex] = e.target.value;

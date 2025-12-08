@@ -96,7 +96,7 @@ const handleInsertUnified = async () => {
     <div id="textarea-section" style={{ padding: "20px" }}>
       <div className="translate-vertical">
         <div className="translate-box">
-          <h3>入力</h3>
+          <h3 className="insert-title">入力</h3>
           
           
           <textarea
@@ -116,7 +116,7 @@ const handleInsertUnified = async () => {
         </div>
 
         <div className="translate-box">
-          <h3>翻訳結果</h3>
+          <h3 className="translate-title">翻訳結果</h3>
           <textarea
             ref={textAreaRefAfter}
             className="translate-textarea"
