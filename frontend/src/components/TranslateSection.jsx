@@ -354,7 +354,7 @@ const renderSaveButton = () => {
       )}
   
       {/* ▼ スライド一覧 */}
-      <div style={{ position: "relative", display: "inline-block" }}>
+      <div style={{ position: "relative", display: "inline-block", marginTop: "15px" }}>
         <button
           id="slideSelectorBtn"
           className="menu-item"

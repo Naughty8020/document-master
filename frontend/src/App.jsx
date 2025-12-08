@@ -88,7 +88,8 @@ const handleSelectFile = async () => {
         textAreaRef={textAreaRef}
         setSlides={setSlides}
       />
-      <Sidebar handleMenuClick={handleMenuClick} />
+      <Sidebar handleMenuClick={handleMenuClick} currentPage={currentPage} />
+
       <div id="mainContent">
         {currentPage === "file-section" && (
           <FileSection

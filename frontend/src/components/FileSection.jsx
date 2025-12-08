@@ -1,4 +1,5 @@
 import React from "react";
+import "../css/fileSection.css";
 
 export default function FileSection({
   fileSelected,

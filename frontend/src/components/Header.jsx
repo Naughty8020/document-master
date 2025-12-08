@@ -24,9 +24,7 @@ export default function Header({ title, selectedFileName, slides, currentIndex, 
     <header id="topHeader">
       <div className="header-title">{title}</div>
       <div className="header-filename">{selectedFileName}</div>
-      <button className="header-save-btn" onClick={handleSave}>
-        保存
-      </button>
+      
     </header>
   );
 }

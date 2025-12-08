@@ -24,6 +24,7 @@ function createWindows() {
     width: 900,
     height: 600,
     show: false,
+    title: "Document Master",
     icon: path.join(__dirname, 'assets/logo.png'),
     center: true,
     webPreferences: {

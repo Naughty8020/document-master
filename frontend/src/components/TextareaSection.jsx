@@ -54,71 +54,61 @@ export default function TextareaSection({ filename }) {
     }
   };
 
-  // ---------------------
-  // 🔴 挿入 （/insert）
-  // ---------------------
-  const handleInsert = async () => {
-    const payload = {
-      text: textAreaRefAfter.current.value,
-      left: pptxPosition.left,
-      top: pptxPosition.top,
-      width: pptxPosition.width,
-      height: pptxPosition.height,
-    };
+  // 挿入ボタンのクリック処理
+const handleInsertUnified = async () => {
+  const ext = filename?.split(".").pop().toLowerCase();
+  const text = textAreaRefAfter.current.value;
 
-    try {
-      await fetch("http://127.0.0.1:8000/insert", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      alert("挿入完了");
-    } catch (err) {
-      console.error("insert error:", err);
-      alert("挿入失敗");
-    }
-  };
-
-  const handleInsertDocx = async () => {
-    const payload = {
-      text: textAreaRefAfter.current.value,
-    };
-
-    try {
+  try {
+    if (ext === "docx") {
+      // DOCX用API
       await fetch("http://127.0.0.1:8000/insert-docx", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ text }),
       });
-
-      alert("挿入完了");
-    } catch (err) {
-      console.error("insert error:", err);
-      alert("挿入失敗");
+    } else if (ext === "ppt" || ext === "pptx") {
+      // PPTX用API
+      await fetch("http://127.0.0.1:8000/insert", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text,
+          left: pptxPosition.left,
+          top: pptxPosition.top,
+          width: pptxPosition.width,
+          height: pptxPosition.height,
+        }),
+      });
+    } else {
+      return alert("対応していないファイル形式です");
     }
-  };
+
+    alert("挿入完了");
+  } catch (err) {
+    console.error("insert error:", err);
+    alert("挿入失敗");
+  }
+};
+
 
   return (
     <div id="textarea-section" style={{ padding: "20px" }}>
       <div className="translate-vertical">
         <div className="translate-box">
           <h3>入力</h3>
-          <div style={{ marginTop: "15px", textAlign: "right" }}>
-            <button className="translate-insert" onClick={handleTranslate}>
-              翻訳する
-            </button>
-          </div>
-          <div style={{ marginTop: "15px", textAlign: "right" }}>
-            <button className="translate-insert" onClick={handleInsertDocx}>
-              docxする
-            </button>
-          </div>
+          
+          
           <textarea
             ref={textAreaRefBefore}
             className="translate-textarea"
             placeholder="ここに翻訳したいテキスト入力"
           />
+          <div style={{ marginTop: "15px", textAlign: "right" }}>
+            <button className="translate-insert" onClick={handleTranslate}>
+              翻訳する
+            </button>
+          </div>
         </div>
 
         <div className="arrow-box">
@@ -126,7 +116,7 @@ export default function TextareaSection({ filename }) {
         </div>
 
         <div className="translate-box">
-          <h3>翻訳結果（日本語）</h3>
+          <h3>翻訳結果</h3>
           <textarea
             ref={textAreaRefAfter}
             className="translate-textarea"
@@ -183,12 +173,12 @@ export default function TextareaSection({ filename }) {
         </>
       )}
 
-      {/* 挿入ボタン */}
-      <div id="insert-btn-container">
-        <button className="insert-btn" onClick={handleInsert}>
-          挿入する
-        </button>
-      </div>
+<div id="insert-btn-container">
+  <button className="insert-btn" onClick={handleInsertUnified}>
+    挿入する
+  </button>
+</div>
+
 
       {/* ▼ 翻訳中モーダル */}
       {isTranslating && (

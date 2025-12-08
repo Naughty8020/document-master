@@ -259,6 +259,16 @@ body {
   outline: none;
 }
 
+/* 通常状態 */
+
+
+/* カレントページ */
+.menu-div.current .menu-item,
+.menu-div.current .menu-icon {
+  color: #195ff2;
+}
+
+
 @media (max-width: 640px) {
   .pptx-grid {
     grid-template-columns: 1fr;
