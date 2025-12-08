@@ -1,7 +1,8 @@
 import React, { useRef, useState } from "react";
 import "../css/insert.css";
+import { useTranslateSetting } from "../context/TranslateSettingContext";
 
-export default function TextareaSection({filename}) {
+export default function TextareaSection({ filename }) {
   const textAreaRefBefore = useRef(null);
   const textAreaRefAfter = useRef(null);
   console.log("TextareaSection filename:", filename);
@@ -14,58 +15,44 @@ export default function TextareaSection({filename}) {
     height: 2,
   });
 
-  const [isTranslating, setIsTranslating] = useState(false); // ← 追加
+  const [isTranslating, setIsTranslating] = useState(false);
+
+  const { language } = useTranslateSetting();
 
   // ---------------------
-  // 🔵 翻訳 （/insert-translate）
+  // 🔵 翻訳
   // ---------------------
   const handleTranslate = async () => {
     const input = textAreaRefBefore.current.value;
+    if (!input.trim()) return alert("翻訳対象のテキストがありません");
 
-    setIsTranslating(true); // 翻訳開始時にモーダル表示
+    setIsTranslating(true);
 
     try {
       const res = await fetch("http://127.0.0.1:8000/insert-translate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: input }),
+        body: JSON.stringify({
+          text: input,
+          target_language: language,
+        }),
       });
 
       const data = await res.json();
 
-      // 翻訳結果を after テキストに入れる
-      textAreaRefAfter.current.value = data.translated_text;
+      if (data.status === "ok") {
+        // Ref に直接書き込む
+        textAreaRefAfter.current.value = data.translated_text;
+      } else {
+        alert("翻訳に失敗しました: " + data.message);
+      }
     } catch (err) {
-      console.error("translate error:", err);
-      alert("翻訳失敗");
+      console.error(err);
+      alert("翻訳に失敗しました");
     } finally {
-      setIsTranslating(false); // 翻訳終了でモーダル非表示
+      setIsTranslating(false);
     }
   };
-
-  // const handleTranslateDocx = async () => {
-  //   const input = textAreaRefBefore.current.value;
-
-  //   setIsTranslating(true);
-  //   try {
-  //     const res = await fetch ("http://127.0.0.1:8000/insert-translate-docx",{
-  //     method: "POST",
-  //       headers: { "Content-Type": "application/json" },
-  //       body: JSON.stringify({ text: input }),
-  //     });
-
-  //     const data = await res.json();
-
-  //     // 翻訳結果を after テキストに入れる
-  //     textAreaRefAfter.current.value = data.translated_text;
-
-  //   } catch (err) {
-  //     console.error("translate error:", err);
-  //     alert("翻訳失敗");
-  //   } finally {
-  //     setIsTranslating(false); // 翻訳終了でモーダル非表示
-  //   }
-  // };
 
   // ---------------------
   // 🔴 挿入 （/insert）
@@ -93,11 +80,9 @@ export default function TextareaSection({filename}) {
     }
   };
 
-
   const handleInsertDocx = async () => {
     const payload = {
       text: textAreaRefAfter.current.value,
-      
     };
 
     try {
@@ -119,18 +104,16 @@ export default function TextareaSection({filename}) {
       <div className="translate-vertical">
         <div className="translate-box">
           <h3>入力</h3>
-            {/* 翻訳ボタン */}
-      <div style={{ marginTop: "15px", textAlign: "right" }}>
-        <button className="translate-insert" onClick={handleTranslate}>
-          翻訳する
-        </button>
-      </div>
-
-      <div style={{ marginTop: "15px", textAlign: "right" }}>
-        <button className="translate-insert" onClick={handleInsertDocx}>
-          docxする
-        </button>
-      </div>
+          <div style={{ marginTop: "15px", textAlign: "right" }}>
+            <button className="translate-insert" onClick={handleTranslate}>
+              翻訳する
+            </button>
+          </div>
+          <div style={{ marginTop: "15px", textAlign: "right" }}>
+            <button className="translate-insert" onClick={handleInsertDocx}>
+              docxする
+            </button>
+          </div>
           <textarea
             ref={textAreaRefBefore}
             className="translate-textarea"
@@ -152,57 +135,53 @@ export default function TextareaSection({filename}) {
         </div>
       </div>
 
-    
-
-
-
       {/* PPTX 挿入位置 */}
-
       {isPPTX && (
         <>
-        <div className="pptx-card" style={{ marginTop: "20px" }}>
-        <h3>📐 PPTX テキスト挿入位置</h3>
-        <div className="pptx-grid">
-          {["left", "top", "width", "height"].map((key) => (
-            <div className="pptx-item" key={key}>
-              <label>{key}</label>
-              <input
-                type="number"
-                value={pptxPosition[key]}
-                step="0.1"
-                onChange={(e) =>
-                  setPptxPosition((prev) => ({
-                    ...prev,
-                    [key]: parseFloat(e.target.value),
-                  }))
-                }
-              />
+          <div className="pptx-card" style={{ marginTop: "20px" }}>
+            <h3>📐 PPTX テキスト挿入位置</h3>
+            <div className="pptx-grid">
+              {["left", "top", "width", "height"].map((key) => (
+                <div className="pptx-item" key={key}>
+                  <label>{key}</label>
+                  <input
+                    type="number"
+                    value={pptxPosition[key]}
+                    step="0.1"
+                    onChange={(e) =>
+                      setPptxPosition((prev) => ({
+                        ...prev,
+                        [key]: parseFloat(e.target.value),
+                      }))
+                    }
+                  />
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </div>
+          </div>
 
-      
-        <div className="info-alert" style={{ marginTop: "20px" }}>
-          <span className="icon-alert">ℹ️</span>
-          <span className="text-alert">
-            デフォルトサイズ（PowerPoint標準）<br />
-            通常の標準(4:3) → Left:10インチ × Top:7.5インチ<br />
-            ワイドスクリーン(16:9) → Left:13.333インチ × Top:7.5インチ<br />
-            Width（textboxの横幅）<br />
-            Height（textboxの縦幅）<br />
-            1インチ=2.54センチ<br />
-            <span className="alert-danger-text">
-              ※この基準を超えるとスライドからはみ出す可能性があります。
+          <div className="info-alert" style={{ marginTop: "20px" }}>
+            <span className="icon-alert">ℹ️</span>
+            <span className="text-alert">
+              デフォルトサイズ（PowerPoint標準）
+              <br />
+              通常の標準(4:3) → Left:10インチ × Top:7.5インチ
+              <br />
+              ワイドスクリーン(16:9) → Left:13.333インチ × Top:7.5インチ
+              <br />
+              Width（textboxの横幅）
+              <br />
+              Height（textboxの縦幅）
+              <br />
+              1インチ=2.54センチ
+              <br />
+              <span className="alert-danger-text">
+                ※この基準を超えるとスライドからはみ出す可能性があります。
+              </span>
             </span>
-          </span>
-        </div>
+          </div>
         </>
-        
-        
       )}
-      
-      
 
       {/* 挿入ボタン */}
       <div id="insert-btn-container">
@@ -252,7 +231,6 @@ export default function TextareaSection({filename}) {
                 animation: "spin 0.8s linear infinite",
               }}
             />
-
             <div style={{ fontSize: "18px", fontWeight: "bold", color: "#333" }}>
               翻訳中…
             </div>

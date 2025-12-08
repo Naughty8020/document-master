@@ -445,33 +445,6 @@ async def api_translate_ja(data: SlidesToTranslate):
 # ----------------------------------------------------
 # /test (シェイプの座標取得)
 # ----------------------------------------------------
-@app.post("/test")
-def test_endpoint(payload: dict = Body(...)):
-    print("Received payload:", payload)
-    selectedFilePath = payload.get("selectedFilePath")
-    prs = Presentation(selectedFilePath)
-    slides_info = []  # 結果を返すために追加
-
-    for slide_index, slide in enumerate(prs.slides):
-        print(f"--- Slide {slide_index + 1} ---")
-        shapes_info = []
-        for shape_index, shape in enumerate(slide.shapes):
-            print(f"Shape {shape_index + 1}:")
-            print(f"  Left: {shape.left}, Top: {shape.top}")
-            print(f"  Width: {shape.width}, Height: {shape.height}")
-
-            # 結果を返すために情報を収集
-            shapes_info.append({
-                "shape_index": shape_index,
-                "left": shape.left,
-                "top": shape.top,
-                "width": shape.width,
-                "height": shape.height
-            })
-
-        slides_info.append({"slide_index": slide_index, "shapes": shapes_info})
-
-    return {"status": "ok", "slides": slides_info}
 
 
 @app.post("/savedocx")
@@ -523,49 +496,9 @@ def save_docx_endpoint(payload: dict = Body(...)):
     }
 
 
-@app.post("/savetest")
-def save_test_endpoint(payload: dict = Body(...)):
-    selectedFilePath = payload.get("selectedFilePath")
-
-    # ---- 元ファイルをメモリ上で読み込む ----
-    with open(selectedFilePath, "rb") as f:
-        pptx_bytes = f.read()
-    prs = Presentation(io.BytesIO(pptx_bytes))
-
-    # ---- 位置情報抽出 ----
-    slides_info = []
-    for slide_index, slide in enumerate(prs.slides):
-        shapes_info = []
-        for shape_index, shape in enumerate(slide.shapes):
-            text = shape.text if shape.has_text_frame else ""
-            shapes_info.append({
-                "shape_index": shape_index,
-                "left": shape.left,
-                "top": shape.top,
-                "width": shape.width,
-                "height": shape.height,
-                "text": text
-            })
-        slides_info.append({
-            "slide_index": slide_index,
-            "shapes": shapes_info
-        })
-
-    # ---- 別名で保存 ----
-    test_save_path = os.path.splitext(selectedFilePath)[0] + "_test.pptx"
-    prs.save(test_save_path)
-
-    return {
-        "status": "ok",
-        "saved_path": test_save_path,
-        "slides": slides_info
-    }
-
-
 # ----------------------------------------------------
 # /savefile (ユーザーの要望通り、閉じる処理を残す)
 # ----------------------------------------------------
-
 logging.basicConfig(level=logging.INFO)
 
 
@@ -742,13 +675,22 @@ def insert_docx(data: TextData):
 
 class TranslateOnly(BaseModel):
     text: str
+    target_language: str  # "ja" か "en"
 
 
 @app.post("/insert-translate")
 def insert_and_translate(data: TranslateOnly):
     try:
-        # ① 翻訳
-        translated_text = TRANS_MODEL.translate_text(data.text)
+        # 翻訳方向を決定
+        tgt_lang = "ja_XX" if data.target_language == "ja" else "en_XX"
+        src_lang = "en_XX" if tgt_lang == "ja_XX" else "ja_XX"
+
+        # 翻訳
+        translated_text = TRANS_MODEL.translate_text(
+            data.text,
+            src_lang=src_lang,
+            tgt_lang=tgt_lang
+        )
 
         return {
             "status": "ok",
