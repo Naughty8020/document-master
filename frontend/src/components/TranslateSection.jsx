@@ -265,11 +265,13 @@ const handleSaveDocx = async () => {
 };
 
 
-// 保存ボタンを切り替える関数
 const renderSaveButton = () => {
   if (!filepath) return null;
 
-  const ext = filepath.split('.').pop().toLowerCase();
+  // after のときだけ表示
+  if (mode !== "after") return null;
+
+  const ext = filepath.split(".").pop().toLowerCase();
 
   if (ext === "ppt" || ext === "pptx") {
     return (
@@ -295,6 +297,7 @@ const renderSaveButton = () => {
 
   return null;
 };
+
 
 
 
@@ -399,7 +402,7 @@ const renderSaveButton = () => {
         <button
           onClick={() => setMode("before")}
           style={{
-            color: mode === "before" ? "red" : "#444",
+            color: mode === "before" ? "blue" : "#444",
             cursor: "pointer",
             background: "transparent",
             border: "none",
@@ -414,7 +417,7 @@ const renderSaveButton = () => {
         <button
           onClick={() => setMode("after")}
           style={{
-            color: mode === "after" ? "rad" : "#444",
+            color: mode === "after" ? "red" : "#444",
             cursor: "pointer",
             background: "transparent",
             border: "none",
@@ -479,18 +482,19 @@ const renderSaveButton = () => {
   <div style={{ textAlign: "right", marginTop: "10px" }}>
   {renderSaveButton()}
 
-  {translateMode === "all" && (
-    <button
-      id="translateBtn"
-      className="header-save-btn"
-      onClick={handleTranslate}
-      disabled={isTranslating}
-    >
-      {isTranslating ? "翻訳中…" : "全スライド翻訳"}
-    </button>
-  )}
+  {translateMode === "all" && mode === "before" && (
+  <button
+    id="translateBtn"
+    className="header-save-btn"
+    onClick={handleTranslate}
+    disabled={isTranslating}
+  >
+    {isTranslating ? "翻訳中…" : "全スライド翻訳"}
+  </button>
+)}
 
-  {translateMode === "selected" && (
+
+  {translateMode === "selected" && mode ==="before" && (
     <button
       id="translateBtnSelected"
       className="header-save-btn"
