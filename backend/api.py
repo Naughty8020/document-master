@@ -311,12 +311,16 @@ class Slide(BaseModel):
 
 class SlidesToTranslate(BaseModel):
     slides: List[Slide]
+    language: str
 
 
 @app.post("/translate_text")
 async def api_translate_text(data: SlidesToTranslate):
     if TRANS_MODEL is None:
         return {"error": "翻訳モデルがロードされていません", "translated_text": data.dict()}
+
+    tgt_lang = "ja_XX" if data.language == "ja" else "en_XX"
+    src_lang = "en_XX" if tgt_lang == "ja_XX" else "ja_XX"
 
     translated_slides = []
 
@@ -327,7 +331,11 @@ async def api_translate_text(data: SlidesToTranslate):
             for p in shape.paragraphs:
                 # デフォルトは日本語→英語
                 translated_text = TRANS_MODEL.translate_text(
-                    p.text, src_lang="ja_XX", tgt_lang="en_XX")
+                    p.text,
+                    src_lang=src_lang,
+                    tgt_lang=tgt_lang
+                )
+
                 t_paragraphs.append({"text": translated_text})
             t_shapes.append({"paragraphs": t_paragraphs})
         translated_slides.append({"shapes": t_shapes})

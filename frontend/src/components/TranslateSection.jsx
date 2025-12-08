@@ -106,65 +106,69 @@ const handleTranslate = async () => {
   // ------------------------
 
 
-const selectedTranslate = async () => {
-  if (!slides || slides.length === 0) return alert("翻訳対象がありません");
 
-  const targetSlide = slides[currentSlideIndex];
-
-  try {
-    setIsTranslating(true);
-
-    // 言語によって API URL を切り替え
-    const apiUrl = language === "ja"
-      ? "http://127.0.0.1:8000/translate-ja"
-      : "http://127.0.0.1:8000/translate_text";
-
-    const res = await fetch(apiUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slides: [targetSlide] }),
-    });
-
-    const data = await res.json();
-    const translated = data.translated_text.slides[0];
-
-    // afterTexts 更新
-    const converted = translated.shapes
-      .map(shape =>
-        shape.paragraphs
-          .map(p => p.text.trim())
-          .filter(Boolean)
-          .join("\n")
-      )
-      .join("\n\n");
-
-    const newAfter = [...afterTexts];
-    newAfter[currentSlideIndex] = converted;
-    setAfterTexts(newAfter);
-
-    // slides の1枚だけ更新
-    const newSlides = [...slides];
-    newSlides[currentSlideIndex] = {
-      ...targetSlide,
-      shapes: targetSlide.shapes.map((shape, j) => ({
-        ...shape,
-        paragraphs: shape.paragraphs.map((p, k) => ({
-          ...p,
-          text: translated.shapes[j].paragraphs[k].text,
+  const selectedTranslate = async () => {
+    if (!slides || slides.length === 0) return alert("翻訳対象がありません");
+  
+    const targetSlide = slides[currentSlideIndex];
+  
+    try {
+      setIsTranslating(true);
+  
+      // 1つの統合 API に送信し、language で翻訳方向を指定
+      const apiUrl = "http://127.0.0.1:8000/translate_text"; // 統合 API
+  
+      const res = await fetch(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slides: [targetSlide],
+          language: language, // context からターゲット言語を指定
+        }),
+      });
+  
+      const data = await res.json();
+      if (!data.translated_text?.slides?.[0]) throw new Error("翻訳結果がありません");
+  
+      const translated = data.translated_text.slides[0];
+  
+      // afterTexts 更新
+      const converted = translated.shapes
+        .map(shape =>
+          shape.paragraphs
+            .map(p => p.text.trim())
+            .filter(Boolean)
+            .join("\n")
+        )
+        .join("\n\n");
+  
+      const newAfter = [...afterTexts];
+      newAfter[currentSlideIndex] = converted;
+      setAfterTexts(newAfter);
+  
+      // slides の1枚だけ更新
+      const newSlides = [...slides];
+      newSlides[currentSlideIndex] = {
+        ...targetSlide,
+        shapes: targetSlide.shapes.map((shape, j) => ({
+          ...shape,
+          paragraphs: shape.paragraphs.map((p, k) => ({
+            ...p,
+            text: translated.shapes[j].paragraphs[k].text,
+          })),
         })),
-      })),
-    };
-
-    setSlides(newSlides);
-
-    alert("翻訳完了");
-  } catch (err) {
-    console.error(err);
-    alert("翻訳に失敗しました");
-  } finally {
-    setIsTranslating(false);
-  }
-};
+      };
+  
+      setSlides(newSlides);
+  
+      alert("翻訳完了");
+    } catch (err) {
+      console.error(err);
+      alert("翻訳に失敗しました");
+    } finally {
+      setIsTranslating(false);
+    }
+  };
 
 
   // ------------------------
