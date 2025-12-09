@@ -1,11 +1,16 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import "../css/insert.css";
 import { useTranslateSetting } from "../context/TranslateSettingContext";
 
 export default function TextareaSection({ filename }) {
-  const textAreaRefBefore = useRef(null);
+  // useRef は、DOM操作やフォーカス制御など、ステート管理が困難な場合にのみ残す
+  const textAreaRefBefore = useRef(null); 
   const textAreaRefAfter = useRef(null);
-  console.log("TextareaSection filename:", filename);
+  
+  // 🔽 1. 入力と翻訳結果をステートで管理
+  const [inputText, setInputText] = useState("");
+  const [translatedText, setTranslatedText] = useState(""); 
+
   const isPPTX = filename?.toLowerCase().endsWith(".pptx");
 
   const [pptxPosition, setPptxPosition] = useState({
@@ -19,21 +24,29 @@ export default function TextareaSection({ filename }) {
 
   const { language } = useTranslateSetting();
 
+ 
+
+  // 🔽 入力エリアの変更ハンドラ (inputTextステートを更新)
+  const handleInputChange = (e) => {
+    setInputText(e.target.value);
+  };
+  
   // ---------------------
   // 🔵 翻訳
   // ---------------------
   const handleTranslate = async () => {
-    const input = textAreaRefBefore.current.value;
-    if (!input.trim()) return alert("翻訳対象のテキストがありません");
+    // 🔽 ステートのinputTextを使用
+    if (!inputText.trim()) return alert("翻訳対象のテキストがありません");
 
     setIsTranslating(true);
+    setTranslatedText(""); // 翻訳開始前に結果エリアをクリア
 
     try {
       const res = await fetch("http://127.0.0.1:8000/insert-translate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          text: input,
+          text: inputText, // 🔽 ステートのinputTextを使用
           target_language: language,
         }),
       });
@@ -41,8 +54,8 @@ export default function TextareaSection({ filename }) {
       const data = await res.json();
 
       if (data.status === "ok") {
-        // Ref に直接書き込む
-        textAreaRefAfter.current.value = data.translated_text;
+        // 🔽 Ref に直接書き込まず、ステートを更新
+        setTranslatedText(data.translated_text); 
       } else {
         alert("翻訳に失敗しました: " + data.message);
       }
@@ -57,7 +70,12 @@ export default function TextareaSection({ filename }) {
   // 挿入ボタンのクリック処理
 const handleInsertUnified = async () => {
   const ext = filename?.split(".").pop().toLowerCase();
-  const text = textAreaRefAfter.current.value;
+  // 🔽 ステートの translatedText を使用
+  const text = translatedText; 
+
+  if (!text.trim()) {
+    return alert("挿入する翻訳テキストがありません");
+  }
 
   try {
     if (ext === "docx") {
@@ -98,23 +116,20 @@ const handleInsertUnified = async () => {
         <div className="translate-box">
           <h3 className="insert-title">入力</h3>
           
-          
           <textarea
             ref={textAreaRefBefore}
             className="translate-textarea"
             placeholder="ここに翻訳したいテキスト入力"
+            // 🔽 ステートによる制御
+            value={inputText}
+            onChange={handleInputChange}
           />
 
-<div className="line-preview-box">
-        {/* <ul>
-          {lines.map((line, i) => (
-            <li key={i}>{line}</li>
-          ))}
-        </ul> */}
-      </div>
+          
+
           <div style={{ marginTop: "15px", textAlign: "right" }}>
-            <button className="translate-insert" onClick={handleTranslate}>
-              翻訳する
+            <button className="translate-insert" onClick={handleTranslate} disabled={isTranslating}>
+              {isTranslating ? "翻訳中..." : "翻訳する"}
             </button>
           </div>
         </div>
@@ -129,11 +144,14 @@ const handleInsertUnified = async () => {
             ref={textAreaRefAfter}
             className="translate-textarea"
             placeholder="翻訳結果が表示"
+            // 🔽 ステートによる制御 (読み取り専用)
+            value={translatedText}
+            readOnly
           />
         </div>
       </div>
 
-      {/* PPTX 挿入位置 */}
+      {/* PPTX 挿入位置 (変更なし) */}
       {isPPTX && (
         <>
           <div className="pptx-card" style={{ marginTop: "20px" }}>
@@ -181,14 +199,14 @@ const handleInsertUnified = async () => {
         </>
       )}
 
-<div id="insert-btn-container">
-  <button className="insert-btn" onClick={handleInsertUnified}>
-    挿入する
-  </button>
-</div>
+      <div id="insert-btn-container">
+        <button className="insert-btn" onClick={handleInsertUnified}>
+          挿入する
+        </button>
+      </div>
 
 
-      {/* ▼ 翻訳中モーダル */}
+      {/* ▼ 翻訳中モーダル (変更なし) */}
       {isTranslating && (
         <div
           style={{

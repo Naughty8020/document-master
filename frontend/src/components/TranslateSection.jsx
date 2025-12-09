@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import "../css/translate.css";
 import { useTranslateSetting } from "../context/TranslateSettingContext";
@@ -16,6 +16,10 @@ export default function TranslateSection({
 
   // after をスライドごとに保持 (保存ロジックで必要)
   const [afterTexts, setAfterTexts] = useState([]);
+
+  // 翻訳前のオリジナルテキストを保持する (Undo機能用)
+  // 構造: { slideIndex: { 'sIndex-pIndex': 'Original Text', ... }, ... }
+  const [originalParagraphTexts, setOriginalParagraphTexts] = useState({});
 
   // 翻訳中フラグ
   const [isTranslating, setIsTranslating] = useState(false);
@@ -45,6 +49,47 @@ export default function TranslateSection({
     return keys;
   };
 
+  // --- Undo機能のための初期化 ---
+  // slides, currentSlideIndex が変更されたときにオリジナルテキストを保持する
+  const initializeOriginalTexts = useCallback(() => {
+    if (!slides || slides.length === 0) return;
+
+    // 🌟 【修正ポイント】既に現在のスライドのオリジナルデータが存在する場合は何もしない
+    // これにより、翻訳で slides が更新されてもオリジナルは上書きされない
+    if (originalParagraphTexts[currentSlideIndex]) {
+        return; 
+    }
+
+    const currentSlide = slides[currentSlideIndex];
+    const originalTexts = {};
+
+    currentSlide?.shapes?.forEach((shape, sIndex) => {
+      shape.paragraphs?.forEach((p, pIndex) => {
+        const key = `${sIndex}-${pIndex}`;
+        if (p.text && p.text.trim() !== "") {
+          originalTexts[key] = p.text;
+        }
+      });
+    });
+
+    setOriginalParagraphTexts(prev => ({
+      ...prev,
+      [currentSlideIndex]: originalTexts
+    }));
+  }, [slides, currentSlideIndex, originalParagraphTexts]);
+
+
+  useEffect(() => {
+    // slides が初めてロードされたとき、またはスライドが切り替わったときに実行
+    initializeOriginalTexts();
+    
+    // スライド切り替え時に選択状態もリセット
+    setSelectedIndexes([]);
+    setSelectedAfterIndexes([]);
+  }, [slides, currentSlideIndex, initializeOriginalTexts]);
+  // -----------------------------
+
+
   // ------------------------
   // 全選択 / 全選択解除 (Before/After 共通ロジック)
   // ------------------------
@@ -56,7 +101,7 @@ export default function TranslateSection({
       ? [selectedIndexes, setSelectedIndexes]
       : [selectedAfterIndexes, setSelectedAfterIndexes];
       
-    const isAllSelected = currentSlideKeys.every(key => currentIndexes.includes(key));
+    const isAllSelected = currentSlideKeys.length > 0 && currentSlideKeys.every(key => currentIndexes.includes(key));
 
     if (isAllSelected) {
       // 全選択解除
@@ -127,6 +172,7 @@ export default function TranslateSection({
       newSlides[currentSlideIndex] = newTargetSlide;
   
       // 3. afterTexts を更新
+      // afterTexts はスライドの全テキストを結合した形式
       const newAfterText = newTargetSlide.shapes
         ?.map(shape =>
           shape.paragraphs
@@ -134,6 +180,7 @@ export default function TranslateSection({
             .filter(Boolean)
             .join("\n")
         )
+        .filter(Boolean)
         .join("\n\n") || "";
 
       const newAfterTexts = [...afterTexts];
@@ -150,6 +197,55 @@ export default function TranslateSection({
   }
 };
   
+
+  // ------------------------
+  // 翻訳前の状態に戻す (Undo機能)
+  // ------------------------
+  const handleRevertToOriginal = () => {
+    const originalTextsForSlide = originalParagraphTexts[currentSlideIndex];
+    if (!originalTextsForSlide) {
+      return alert("元に戻せる翻訳前の状態がありません。");
+    }
+
+    const currentSlide = slides[currentSlideIndex];
+    const newSlides = [...slides];
+    const revertedSlide = JSON.parse(JSON.stringify(currentSlide));
+    
+    // スライドのテキストをオリジナルに戻す
+    revertedSlide.shapes.forEach((shape, sIndex) => {
+      shape.paragraphs.forEach((p, pIndex) => {
+        const key = `${sIndex}-${pIndex}`;
+        if (originalTextsForSlide[key] !== undefined) {
+          p.text = originalTextsForSlide[key];
+        }
+      });
+    });
+    
+    newSlides[currentSlideIndex] = revertedSlide;
+    setSlides(newSlides);
+
+    // afterTexts もリセット (オリジナルのテキストで埋める)
+    const originalAfterText = revertedSlide.shapes
+        ?.map(shape =>
+          shape.paragraphs
+            ?.map(p => p.text.trim())
+            .filter(Boolean)
+            .join("\n")
+        )
+        .filter(Boolean)
+        .join("\n\n") || "";
+        
+    const newAfterTexts = [...afterTexts];
+    newAfterTexts[currentSlideIndex] = originalAfterText;
+    setAfterTexts(newAfterTexts);
+
+    // 選択状態を解除
+    setSelectedIndexes([]);
+    setSelectedAfterIndexes([]);
+
+    alert(`スライド ${currentSlideIndex + 1} の翻訳を元に戻しました。`);
+  };
+
 
   // ------------------------
   // 保存 (選択された行のみ保存)
@@ -176,6 +272,8 @@ export default function TranslateSection({
           
           if (p.text && p.text.trim() !== "") {
             // 選択されている場合、slides[currentSlideIndex]のテキストを使用
+            // ※ここでは afterTexts の lineIndex と shape/paragraph の対応が1:1であることを前提にしている
+            //   この対応付けロジックが複雑なPPT構造で常に正確とは限らない点に注意
             if (selectedAfterIndexes.includes(key) && lineIndex < editedAfterTextLines.length) {
               editedAfterTextLines[lineIndex] = p.text.trim();
             }
@@ -193,13 +291,21 @@ export default function TranslateSection({
     } 
     
     // finalTargetSlide のテキストを afterTexts の内容で上書き（保存ロジックの互換性維持のため）
+    // NOTE: これは非推奨のPPT処理パターン。afterTextsの内容を shapes/paragraphs に正確に戻す必要があります。
     if (afterTexts[currentSlideIndex]) {
-        const edited = afterTexts[currentSlideIndex].split("\n");
-        finalTargetSlide.shapes.forEach((s, i) => {
-            if (!edited[i]) return;
-            if (s.paragraphs[0]) {
-                s.paragraphs[0].text = edited[i];
-            }
+        const afterLines = afterTexts[currentSlideIndex].split(/\n+/).filter(Boolean); // 改行で分割し空行を除去
+        let lineIdx = 0;
+        
+        finalTargetSlide.shapes.forEach((s) => {
+            s.paragraphs?.forEach((p) => {
+                // p.text が空でない場合のみ、afterLines からテキストを割り当てる
+                if (p.text && p.text.trim() !== "") {
+                    if (lineIdx < afterLines.length) {
+                        p.text = afterLines[lineIdx];
+                    }
+                    lineIdx++;
+                }
+            });
         });
     }
 
@@ -249,6 +355,7 @@ const handleSaveDocx = async () => {
               .filter(Boolean)
               .join("\n")
           )
+          .filter(Boolean) // ここで空文字列になったものを除外
           .join("\n\n");
     return text;
   });
@@ -314,16 +421,46 @@ const renderSaveButton = () => {
   return (
     <div id="translate-section" className="page">
   
-      {/* ▼ 翻訳中モーダル (省略) */}
+      {/* ▼ 翻訳中モーダル (復元) */}
       {isTranslating && (
         <div
-          style={{ /* ... style ... */ }}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100vw",
+            height: "100vh",
+            background: "rgba(0,0,0,0.45)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 9999,
+            backdropFilter: "blur(2px)",
+          }}
         >
           <div
-            style={{ /* ... style ... */ }}
+            style={{
+              background: "white",
+              padding: "30px 50px",
+              borderRadius: "14px",
+              fontSize: "20px",
+              boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "15px",
+              minWidth: "260px",
+            }}
           >
             <div
-              style={{ /* ... style ... */ }}
+              style={{
+                width: "40px",
+                height: "40px",
+                border: "4px solid #ccc",
+                borderTop: "4px solid #4a90e2",
+                borderRadius: "50%",
+                animation: "spin 0.8s linear infinite",
+              }}
             />
   
             <div style={{ fontSize: "18px", fontWeight: "bold", color: "#333" }}>
@@ -333,7 +470,7 @@ const renderSaveButton = () => {
         </div>
       )}
   
-      {/* ▼ スライド一覧 (省略) */}
+      {/* ▼ スライド一覧 */}
       <div style={{ position: "relative", display: "inline-block", marginTop: "15px" }}>
         <button
           id="slideSelectorBtn"
@@ -412,26 +549,35 @@ const renderSaveButton = () => {
       <div style={{ border: "1px solid #ccc", padding: "10px", borderRadius: "4px" }}>
         
         {/* 全選択/解除ボタン */}
-        <div style={{ marginBottom: "10px", textAlign: "right" }}>
-          <button 
-            onClick={toggleAllSelect} 
-            disabled={isTranslating}
-            style={{
-              padding: "4px 8px", 
-              borderRadius: "4px", 
-              border: "1px solid #4a90ff", 
-              background: "#f0f8ff", 
-              cursor: "pointer",
-              fontSize: "12px"
-            }}
-          >
-            {
-              // mode に応じて対象の state を選択
-              (mode === "before" ? selectedIndexes : selectedAfterIndexes).every(key => getAllParagraphKeys(slides[currentSlideIndex]).includes(key)) 
-                ? "全選択解除" 
-                : "全選択"
-            }
-          </button>
+        <div style={{ marginBottom: "0px", textAlign: "right" }}>
+          {mode === "before" && (() => {
+            // 🌟 修正: 全選択ボタンの表示テキストの判定ロジックを修正
+            const currentSlideKeys = getAllParagraphKeys(slides[currentSlideIndex]);
+            const selectedCount = selectedIndexes.length;
+            const totalCount = currentSlideKeys.length;
+
+            // 選択されたキーのセットが、現在のスライドの全キーのセットと一致するかどうかを判定する
+            const isAllSelected = totalCount > 0 && selectedCount === totalCount && 
+                                  currentSlideKeys.every(key => selectedIndexes.includes(key));
+            
+            return (
+              <button 
+                onClick={toggleAllSelect} 
+                disabled={isTranslating}
+                style={{
+                  padding: "4px 8px", 
+                  borderRadius: "4px", 
+                  border: "1px solid #4a90ff", 
+                  background: "#f0f8ff", 
+                  cursor: "pointer",
+                  fontSize: "12px",
+                  
+                }}
+              >
+                {isAllSelected ? "全選択解除" : "全選択"}
+              </button>
+            );
+          })()}
         </div>
 
         <ul>
@@ -449,10 +595,20 @@ const renderSaveButton = () => {
                   if (!p.text || p.text.trim() === "") {
                     return null;
                   }
+                  
+                  // 🌟 変更検出ロジック (前回修正)
+                  const originalText = originalParagraphTexts[currentSlideIndex]?.[key];
+                  const isModified = originalText && originalText.trim() !== p.text.trim(); 
+
+                  // 🌟 AFTERモードの色決定ロジック (前回修正)
+                  const textColor = mode === "after" 
+                      ? (isModified ? "red" : "#333") // AFTERモード: 変更ありなら赤、なければ黒
+                      : "#333";                        // BEFOREモード: 黒
   
                   return (
                     <li
                       key={key}
+                      // 🌟 liタグのインラインスタイル
                       style={{
                         display: "flex",
                         alignItems: "center",
@@ -463,7 +619,8 @@ const renderSaveButton = () => {
                         borderRadius: "4px",
                       }}
                     >
-                      {/* 選択ボタン */}
+                      {/* 選択ボタン: modeが "before" の時のみ表示 */}
+                      {mode === "before" && ( 
                         <button
                           style={{
                             width: "18px",
@@ -481,8 +638,10 @@ const renderSaveButton = () => {
                             );
                           }}
                         />
+                      )}
 
-                      <span style={{ color: mode === "after" ? "red" : "#333" }}>
+                      {/* 🌟 スタイルの適用 */}
+                      <span style={{ color: textColor }}>
                         {p.text}
                       </span>
                     </li>
@@ -493,7 +652,21 @@ const renderSaveButton = () => {
           </ul>
       </div>
   
-  <div style={{ textAlign: "right", marginTop: "10px" }}>
+  <div style={{ textAlign: "right", marginTop: "10px", display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+  
+  {/* 翻訳前の状態に戻すボタン (Undo機能) */}
+  {(mode === "before" || mode === "after") && (
+      <button
+          id="revertBtn"
+          className="header-save-btn"
+          onClick={handleRevertToOriginal}
+          disabled={isTranslating || !originalParagraphTexts[currentSlideIndex]}
+          style={{ backgroundColor: "#dc2f2f", color: "#fff", border: "1px solid #ccc" }}
+      >
+          元に戻す
+      </button>
+  )}
+
   {renderSaveButton()}
 
   {translateMode === "all" && mode === "before" && (
