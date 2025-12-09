@@ -409,6 +409,18 @@ const renderSaveButton = () => {
       <button
         onClick={handleSaveDocx}
         disabled={isTranslating}
+        style={{
+          // 💡 青いボタンにするためのスタイル
+          backgroundColor: '#1a6aff', // 鮮やかな青
+          color: 'white',             // 文字色を白に
+          border: 'none',             // 境界線を削除
+          padding: '10px 20px',       // パディングを追加
+          borderRadius: '8px',        // 角を丸くする
+          cursor: 'pointer',          // マウスオーバー時にカーソルをポインターに
+          fontWeight: 'bold',         // 文字を太く
+          transition: 'background-color 0.3s ease', // ホバー時の滑らかな変化のため
+          // disabled時のスタイルも考慮するとさらに良いですが、基本形は上記です。
+        }}
       >
         DOCX 保存
       </button>
