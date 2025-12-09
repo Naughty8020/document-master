@@ -22,7 +22,7 @@ export default function Header({ title, selectedFileName, slides, currentIndex, 
 
   return (
     <header id="topHeader">
-      <div className="header-title">{title}</div>
+      <image src="" className="header-title"></image>
       <div className="header-filename">{selectedFileName}</div>
       
     </header>
