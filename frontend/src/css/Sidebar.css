@@ -1,0 +1,22 @@
+.header-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+  
+  .header-icon {
+    width: 22px;
+    height: 22px;
+  }
+  
+  .header-text {
+    flex: 1;              /* ← これが最重要！残り全部を使う */
+    height: 20px;
+    object-fit: contain;
+  }
+  
+
+  .menu-container{
+    margin-top: 20px;
+  }
