@@ -558,7 +558,7 @@ const renderSaveButton = () => {
       </div>
   
       {/* 選択ボタン / リスト本体 */}
-      <div style={{ border: "1px solid #ccc", padding: "10px", borderRadius: "4px" }}>
+      <div style={{ border: "1px solid #ccc", padding: "10px", borderRadius: "4px", backgroundColor: "#f9f9f9"}}>
         
         {/* 全選択/解除ボタン */}
         <div style={{ marginBottom: "0px", textAlign: "right" }}>

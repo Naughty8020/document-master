@@ -25,7 +25,7 @@ function createWindows() {
     height: 600,
     show: false,
     title: "Document Master",
-    icon: path.join(__dirname, 'assets/logo.png'),
+    icon: path.join(__dirname, 'assets/appicon.png'),
     center: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
